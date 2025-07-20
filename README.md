@@ -249,3 +249,4 @@ For support, email support@docbooking.app or join our Slack channel.
 ---
 
 Built with ❤️ using React Native and Expo
+# rn-clinic-management
