@@ -27,6 +27,24 @@ function App() {
           search: testUrl.search
         });
 
+        // Test structuredClone polyfill
+        if (typeof global.structuredClone === 'function') {
+          const testObj = { 
+            name: 'test', 
+            nested: { value: 42 }, 
+            array: [1, 2, { deep: true }],
+            date: new Date()
+          };
+          const cloned = global.structuredClone(testObj);
+          console.log('✅ structuredClone polyfill working:', {
+            original: testObj,
+            cloned: cloned,
+            isDeepCopy: cloned !== testObj && cloned.nested !== testObj.nested
+          });
+        } else {
+          throw new Error('structuredClone polyfill not available');
+        }
+
         // Initialize Supabase
         await getSupabase();
         console.log('✅ Supabase initialized successfully');

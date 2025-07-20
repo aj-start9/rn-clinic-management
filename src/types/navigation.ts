@@ -40,6 +40,8 @@ export type TabScreenProps<T extends keyof TabParamList> =
 
 declare global {
   namespace ReactNavigation {
-    interface RootParamList extends RootStackParamList {}
+    interface RootParamList extends RootStackParamList {
+      // This extends the RootStackParamList with all route names
+    }
   }
 }

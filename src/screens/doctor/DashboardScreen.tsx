@@ -1,31 +1,70 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
-  FlatList,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native';
 import { AppointmentCard } from '../../components/AppointmentCard';
 import { BorderRadius, Colors, Shadow, Spacing, Typography } from '../../constants/theme';
-import { fetchDoctorAppointments } from '../../redux/appointmentSlice.supabase';
+import { fetchAppointmentsByRole } from '../../redux/appointmentSlice.supabase';
 import { useAppDispatch, useAppSelector } from '../../redux/hooks';
+import { getDoctorDashboardStats, getDoctorRecentActivity } from '../../services/dashboardService';
+import { getDoctorClinics } from '../../services/doctorService';
 import { Appointment } from '../../types';
 
 export const DoctorDashboardScreen: React.FC = () => {
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
-  const { user } = useAppSelector((state) => state.auth);
+  const { user, doctorData } = useAppSelector((state) => state.auth);
   const { appointments, loading } = useAppSelector((state) => state.appointments);
-
+  
+  // Local state for additional data
+  const [clinics, setClinics] = useState<any[]>([]);
+  const [dashboardStats, setDashboardStats] = useState<any>(null);
+  const [recentActivity, setRecentActivity] = useState<any[]>([]);
+  const [dashboardLoading, setDashboardLoading] = useState(true);
+  
   useEffect(() => {
-    if (user?.id) {
-      dispatch(fetchDoctorAppointments(user.id));
-    }
-  }, [dispatch, user?.id]);
+    const fetchDashboardData = async () => {
+
+      if (user?.id && user?.role === 'doctor' && doctorData?.data?.doctor?.id) {
+        setDashboardLoading(true);
+        
+        try {
+          // Get doctor ID from Redux state
+          const doctorId = doctorData.data.doctor.id;
+
+          // Fetch appointments using role-based API
+          dispatch(fetchAppointmentsByRole({
+            userId: user.id,
+            userRole: 'doctor',
+            doctorId
+          }));
+          // Fetch doctor's clinics
+          const clinicsData = await getDoctorClinics(doctorId);
+          setClinics(clinicsData || []);
+          // Fetch dashboard statistics
+          const { data: statsData } = await getDoctorDashboardStats(doctorId);
+          if (statsData) {
+            setDashboardStats(statsData);
+          }
+          // Fetch recent activity
+          const { data: activityData } = await getDoctorRecentActivity(doctorId, 5);
+          setRecentActivity(activityData || []);
+        } catch (error) {
+          console.error('Error fetching dashboard data:', error);
+        } finally {
+          setDashboardLoading(false);
+        }
+      }
+    };
+
+    fetchDashboardData();
+  }, [dispatch, user?.id, user?.role, doctorData]);
 
   const today = new Date();
   const todayString = today.toISOString().split('T')[0];
@@ -103,6 +142,44 @@ export const DoctorDashboardScreen: React.FC = () => {
         {renderStatCard('Pending', pendingAppointments, 'time', Colors.warning)}
       </View>
 
+      {/* Clinics Overview */}
+      {clinics.length > 0 && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Your Clinics</Text>
+          <View style={styles.clinicsContainer}>
+            {clinics.map((clinic, index) => (
+              <View key={clinic.id || index} style={styles.clinicCard}>
+                <Ionicons name="location" size={20} color={Colors.primary} />
+                <View style={styles.clinicInfo}>
+                  <Text style={styles.clinicName}>{clinic.name}</Text>
+                  <Text style={styles.clinicAddress} numberOfLines={2}>{clinic.address}</Text>
+                </View>
+              </View>
+            ))}
+          </View>
+        </View>
+      )}
+
+      {/* Recent Activity */}
+      {recentActivity.length > 0 && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Recent Activity</Text>
+          <View style={styles.activityContainer}>
+            {recentActivity.slice(0, 3).map((activity, index) => (
+              <View key={activity.id || index} style={styles.activityCard}>
+                <View style={styles.activityIcon}>
+                  <Ionicons name={activity.icon} size={16} color={Colors.primary} />
+                </View>
+                <View style={styles.activityInfo}>
+                  <Text style={styles.activityTitle} numberOfLines={1}>{activity.title}</Text>
+                  <Text style={styles.activitySubtitle} numberOfLines={1}>{activity.subtitle}</Text>
+                </View>
+              </View>
+            ))}
+          </View>
+        </View>
+      )}
+
       {/* Quick Actions */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Quick Actions</Text>
@@ -124,50 +201,6 @@ export const DoctorDashboardScreen: React.FC = () => {
           )}
         </View>
       </View>
-
-      {/* Today's Appointments */}
-      <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Today's Appointments</Text>
-          <TouchableOpacity onPress={() => navigation.navigate('DoctorAppointments' as never)}>
-            <Text style={styles.seeAllText}>See All</Text>
-          </TouchableOpacity>
-        </View>
-        
-        {todayAppointments.length > 0 ? (
-          <FlatList
-            data={todayAppointments.slice(0, 3)}
-            renderItem={renderAppointment}
-            keyExtractor={(item) => item.id}
-            scrollEnabled={false}
-          />
-        ) : (
-          <View style={styles.emptyContainer}>
-            <Ionicons name="calendar-outline" size={48} color={Colors.darkGray} />
-            <Text style={styles.emptyText}>No appointments today</Text>
-            <Text style={styles.emptySubtext}>Enjoy your free day!</Text>
-          </View>
-        )}
-      </View>
-
-      {/* Upcoming Appointments */}
-      {upcomingAppointments.length > 0 && (
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Upcoming Appointments</Text>
-            <TouchableOpacity onPress={() => navigation.navigate('DoctorAppointments' as never)}>
-              <Text style={styles.seeAllText}>See All</Text>
-            </TouchableOpacity>
-          </View>
-          
-          <FlatList
-            data={upcomingAppointments.slice(0, 2)}
-            renderItem={renderAppointment}
-            keyExtractor={(item) => item.id}
-            scrollEnabled={false}
-          />
-        </View>
-      )}
     </ScrollView>
   );
 };
@@ -263,6 +296,7 @@ const styles = StyleSheet.create({
     fontSize: Typography.sizes.lg,
     fontWeight: Typography.weights.bold,
     color: Colors.text.primary,
+    marginBottom: Spacing.sm,
   },
   seeAllText: {
     fontSize: Typography.sizes.md,
@@ -309,5 +343,83 @@ const styles = StyleSheet.create({
     fontSize: Typography.sizes.md,
     color: Colors.darkGray,
     marginTop: Spacing.sm,
+  },
+  loadingContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: Spacing.lg,
+    marginHorizontal: Spacing.lg,
+    backgroundColor: Colors.white,
+    borderRadius: BorderRadius.lg,
+    ...Shadow.sm,
+  },
+  loadingText: {
+    fontSize: Typography.sizes.md,
+    color: Colors.darkGray,
+    fontWeight: Typography.weights.medium,
+  },
+  clinicsContainer: {
+    gap: Spacing.md,
+  },
+  clinicCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.white,
+    padding: Spacing.md,
+    borderRadius: BorderRadius.lg,
+    ...Shadow.sm,
+  },
+  clinicInfo: {
+    flex: 1,
+    marginLeft: Spacing.md,
+  },
+  clinicName: {
+    fontSize: Typography.sizes.md,
+    fontWeight: Typography.weights.semibold,
+    color: Colors.text.primary,
+    marginBottom: Spacing.xs,
+  },
+  clinicAddress: {
+    fontSize: Typography.sizes.sm,
+    color: Colors.darkGray,
+    lineHeight: 18,
+  },
+  activityContainer: {
+    gap: Spacing.sm,
+  },
+  activityCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.white,
+    padding: Spacing.md,
+    borderRadius: BorderRadius.md,
+    ...Shadow.sm,
+  },
+  activityIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: BorderRadius.md,
+    backgroundColor: Colors.secondary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: Spacing.md,
+  },
+  activityInfo: {
+    flex: 1,
+  },
+  activityTitle: {
+    fontSize: Typography.sizes.md,
+    fontWeight: Typography.weights.medium,
+    color: Colors.text.primary,
+    marginBottom: Spacing.xs,
+  },
+  activitySubtitle: {
+    fontSize: Typography.sizes.sm,
+    color: Colors.darkGray,
+  },
+  activityTime: {
+    fontSize: Typography.sizes.xs,
+    color: Colors.darkGray,
+    fontWeight: Typography.weights.medium,
   },
 });

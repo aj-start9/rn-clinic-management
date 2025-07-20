@@ -1,13 +1,13 @@
 import { Ionicons } from '@expo/vector-icons';
 import { RouteProp, useRoute } from '@react-navigation/native';
-import React, { useState } from 'react';
+import React from 'react';
 import {
-    Image,
-    ScrollView,
-    StyleSheet,
-    Text,
-    View,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
 } from 'react-native';
+import { Avatar } from '../../components/Avatar';
 import { Button } from '../../components/Button';
 import { CustomModal } from '../../components/CustomModal';
 import { BorderRadius, Colors, Shadow, Spacing, Typography } from '../../constants/theme';
@@ -28,9 +28,14 @@ export const BookAppointmentScreen: React.FC = () => {
   const { loading } = useAppSelector((state) => state.appointments);
   const { modalState, showError, showSuccess, hideModal } = useModal();
   
-  const [notes, setNotes] = useState('');
-
   const { doctor, date, slot, clinic } = route.params;
+
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good morning';
+    if (hour < 17) return 'Good afternoon';
+    return 'Good evening';
+  };
 
   const handleBookAppointment = async () => {
     if (!user || !doctor || !date || !slot || !clinic) {
@@ -42,9 +47,9 @@ export const BookAppointmentScreen: React.FC = () => {
       await dispatch(bookAppointment({
         doctor_id: doctor.id,
         user_id: user.id,
-        clinic,
+        clinic_id: clinic.id,
         date,
-        slot,
+        slot_id: slot.id,
         status: 'pending',
       })).unwrap();
 
@@ -82,15 +87,21 @@ export const BookAppointmentScreen: React.FC = () => {
   return (
     <>
       <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      <Text style={styles.title}>Confirm Appointment</Text>
-      
+      <Text style={styles.title}>
+        {getGreeting()}, {user?.full_name || 'User'}
+      </Text>
+      <Text style={styles.subtitle}>Let's confirm your appointment</Text>
       {/* Doctor Info */}
       <View style={styles.card}>
         <View style={styles.doctorInfo}>
-          <Image source={{ uri: doctor.photo_url }} style={styles.doctorImage} />
+          <Avatar
+            name={doctor.name}
+            role="doctor"
+            size={80}
+          />
           <View style={styles.doctorDetails}>
             <Text style={styles.doctorName}>{doctor.name}</Text>
-            <Text style={styles.specialty}>{doctor.specialty}</Text>
+            <Text style={styles.specialty}>{doctor.specialty_id}</Text>
             <View style={styles.ratingContainer}>
               <Ionicons name="star" size={16} color="#FFD700" />
               <Text style={styles.rating}>{doctor.rating}</Text>
@@ -207,7 +218,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: Spacing.lg,
+    padding: Spacing.md,
   },
   errorText: {
     fontSize: Typography.sizes.lg,
@@ -218,12 +229,18 @@ const styles = StyleSheet.create({
     fontSize: Typography.sizes.xl,
     fontWeight: Typography.weights.bold,
     color: Colors.text.primary,
-    padding: Spacing.lg,
+    padding: Spacing.md,
+    paddingBottom: Spacing.xs,
+  },
+  subtitle: {
+    fontSize: Typography.sizes.md,
+    color: Colors.text.secondary,
+    paddingHorizontal: Spacing.md,
     paddingBottom: Spacing.md,
   },
   card: {
     backgroundColor: Colors.white,
-    marginHorizontal: Spacing.lg,
+    marginHorizontal: Spacing.md,
     marginBottom: Spacing.md,
     borderRadius: BorderRadius.lg,
     padding: Spacing.lg,
@@ -233,14 +250,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  doctorImage: {
-    width: 60,
-    height: 60,
-    borderRadius: BorderRadius.full,
-    marginRight: Spacing.md,
-  },
   doctorDetails: {
     flex: 1,
+    marginLeft: Spacing.md,
   },
   doctorName: {
     fontSize: Typography.sizes.lg,
@@ -340,7 +352,7 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   bookingContainer: {
-    padding: Spacing.lg,
+    padding: Spacing.md,
     paddingBottom: Spacing.xxl,
   },
   bookButton: {

@@ -11,34 +11,46 @@ import { AppointmentCard } from '../../components/AppointmentCard';
 import { CustomModal } from '../../components/CustomModal';
 import { BorderRadius, Colors, Spacing, Typography } from '../../constants/theme';
 import { useModal } from '../../hooks/useModal';
-import { fetchUserAppointments, updateAppointmentStatus } from '../../redux/appointmentSlice.supabase';
+import { fetchAppointmentsByRole, updateAppointmentStatus } from '../../redux/appointmentSlice.supabase';
 import { useAppDispatch, useAppSelector } from '../../redux/hooks';
 import { Appointment } from '../../types';
 
 export const AppointmentsScreen: React.FC = () => {
   const dispatch = useAppDispatch();
-  const { user } = useAppSelector((state) => state.auth);
-  const { appointments, loading } = useAppSelector((state) => state.appointments);
+  const { user, doctorData } = useAppSelector((state) => state.auth);
+  const { appointments, loading, error } = useAppSelector((state) => state.appointments);
   const { modalState, showConfirm, hideModal } = useModal();
   
   const [activeTab, setActiveTab] = useState<'upcoming' | 'past'>('upcoming');
 
   useEffect(() => {
-    if (user?.id) {
-      dispatch(fetchUserAppointments(user.id));
+    if (user) {
+      // Use role-based appointment fetching
+      // For doctors, pass the doctor ID from Redux state if available
+      const doctorId = user.role === 'doctor' && doctorData?.doctor?.id 
+        ? doctorData.doctor.id 
+        : undefined;
+        
+      dispatch(fetchAppointmentsByRole({
+        userId: user.id,
+        userRole: user.role,
+        doctorId
+      }));
     }
-  }, [dispatch, user?.id]);
+  }, [dispatch, user, doctorData]);
 
   const currentDate = new Date();
   
   const upcomingAppointments = appointments.filter((appointment: Appointment) => {
     const appointmentDate = new Date(appointment.date);
-    return appointmentDate >= currentDate && appointment.status !== 'completed' && appointment.status !== 'cancelled';
+    const isUpcoming = appointmentDate >= currentDate && appointment.status !== 'completed' && appointment.status !== 'cancelled';
+    return isUpcoming;
   });
 
   const pastAppointments = appointments.filter((appointment: Appointment) => {
     const appointmentDate = new Date(appointment.date);
-    return appointmentDate < currentDate || appointment.status === 'completed' || appointment.status === 'cancelled';
+    const isPast = appointmentDate < currentDate || appointment.status === 'completed' || appointment.status === 'cancelled';
+    return isPast;
   });
 
   const handleCancelAppointment = (appointmentId: string) => {
@@ -54,7 +66,7 @@ export const AppointmentsScreen: React.FC = () => {
   const renderAppointment = ({ item }: { item: Appointment }) => (
     <AppointmentCard
       appointment={item}
-      userRole="consumer"
+      userRole={user?.role || 'consumer'}
       onCancel={() => handleCancelAppointment(item.id)}
     />
   );
@@ -123,7 +135,19 @@ export const AppointmentsScreen: React.FC = () => {
         refreshControl={
           <RefreshControl
             refreshing={loading}
-            onRefresh={() => user?.id && dispatch(fetchUserAppointments(user.id))}
+            onRefresh={() => {
+              if (user?.id && user.role) {
+                const doctorId = user.role === 'doctor' && doctorData?.doctor?.id 
+                  ? doctorData.doctor.id 
+                  : undefined;
+                  
+                dispatch(fetchAppointmentsByRole({
+                  userId: user.id,
+                  userRole: user.role,
+                  doctorId
+                }));
+              }
+            }}
             colors={[Colors.primary]}
           />
         }

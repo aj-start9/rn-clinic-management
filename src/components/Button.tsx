@@ -1,21 +1,22 @@
 import React from 'react';
 import {
-    ActivityIndicator,
-    StyleSheet,
-    Text,
-    TextStyle,
-    TouchableOpacity,
-    ViewStyle,
+  ActivityIndicator,
+  StyleSheet,
+  Text,
+  TextStyle,
+  TouchableOpacity,
+  ViewStyle
 } from 'react-native';
 import { BorderRadius, Colors, Spacing, Typography } from '../constants/theme';
 
 interface ButtonProps {
   title: string;
   onPress: () => void;
-  variant?: 'primary' | 'secondary' | 'outline';
+  variant?: 'primary' | 'secondary' | 'outline' | 'danger';
   size?: 'small' | 'medium' | 'large';
   disabled?: boolean;
   loading?: boolean;
+  loadingText?: string;
   style?: ViewStyle;
   textStyle?: TextStyle;
 }
@@ -84,6 +85,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.primary,
   },
+  danger: {
+    backgroundColor: Colors.error,
+  },
   // Sizes
   small: {
     paddingHorizontal: Spacing.md,
@@ -117,6 +121,9 @@ const styles = StyleSheet.create({
   },
   outlineText: {
     color: Colors.primary,
+  },
+  dangerText: {
+    color: Colors.white,
   },
   smallText: {
     fontSize: Typography.sizes.sm,

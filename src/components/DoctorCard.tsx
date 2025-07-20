@@ -1,14 +1,14 @@
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import {
-    Image,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { BorderRadius, Colors, Shadow, Spacing, Typography } from '../constants/theme';
 import { Doctor } from '../types';
+import { Avatar } from './Avatar';
 
 interface DoctorCardProps {
   doctor: Doctor;
@@ -46,16 +46,20 @@ export const DoctorCard: React.FC<DoctorCardProps> = ({ doctor, onPress }) => {
   return (
     <TouchableOpacity style={styles.container} onPress={onPress} activeOpacity={0.8}>
       <View style={styles.header}>
-        <Image source={{ uri: doctor.photo_url }} style={styles.avatar} />
+        <Avatar
+          name={doctor.name}
+          role="doctor"
+          size={60}
+        />
         <View style={styles.info}>
-          <Text style={styles.name}>{doctor.name}</Text>
-          <Text style={styles.specialty}>{doctor.specialty}</Text>
+          <Text style={styles.name}>{doctor.name || 'Unknown Doctor'}</Text>
+          <Text style={styles.specialty}>{doctor.specialty_id || 'General Practice'}</Text>
           <View style={styles.ratingContainer}>
             <View style={styles.stars}>
               {renderStars(doctor.rating)}
             </View>
             <Text style={styles.ratingText}>
-              {doctor.rating} ({doctor.experience_years} years)
+              {doctor.rating} ({doctor.experience_years || 0} years)
             </Text>
           </View>
         </View>
@@ -67,13 +71,13 @@ export const DoctorCard: React.FC<DoctorCardProps> = ({ doctor, onPress }) => {
       <View style={styles.footer}>
         <View style={styles.feeContainer}>
           <Text style={styles.feeLabel}>Consultation Fee</Text>
-          <Text style={styles.fee}>${doctor.fee}</Text>
+          <Text style={styles.fee}>${doctor.fee || 'N/A'}</Text>
         </View>
         
         <View style={styles.clinicsContainer}>
           <Ionicons name="location-outline" size={16} color={Colors.darkGray} />
           <Text style={styles.clinicsText}>
-            {doctor.clinics?.length || 0} {doctor.clinics?.length === 1 ? 'clinic' : 'clinics'}
+            {(doctor.clinics?.length || 0)} {(doctor.clinics?.length || 0) === 1 ? 'clinic' : 'clinics'}
           </Text>
         </View>
       </View>
@@ -94,14 +98,9 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     marginBottom: Spacing.md,
   },
-  avatar: {
-    width: 60,
-    height: 60,
-    borderRadius: BorderRadius.full,
-    marginRight: Spacing.md,
-  },
   info: {
     flex: 1,
+    marginLeft: Spacing.md,
   },
   name: {
     fontSize: Typography.sizes.lg,

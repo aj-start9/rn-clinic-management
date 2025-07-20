@@ -1,6 +1,7 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
-import { getDoctorById, getDoctors } from '../services/supabase';
+import { getDoctorById, getDoctors } from '../services/doctorService';
 import { DoctorState } from '../types';
+import { resetAllState } from './authSlice.supabase';
 
 const initialState: DoctorState = {
   doctors: [],
@@ -21,8 +22,7 @@ export const fetchDoctors = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const { data, error } = await getDoctors();
-      
-      if (error) {
+      if (error) { 
         throw new Error(error.message);
       }
       
@@ -38,6 +38,25 @@ export const fetchDoctorById = createAsyncThunk(
   async (doctorId: string, { rejectWithValue }) => {
     try {
       const { data, error } = await getDoctorById(doctorId);
+      
+      if (error) {
+        throw new Error(error.message);
+      }
+      
+      return data;
+    } catch (error: any) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+// New thunk for fetching detailed doctor information
+export const fetchDoctorDetails = createAsyncThunk(
+  'doctors/fetchDoctorDetails',
+  async (doctorId: string, { rejectWithValue }) => {
+    try {
+      const { getDoctorDetails } = await import('../services/doctorService');
+      const { data, error } = await getDoctorDetails(doctorId);
       
       if (error) {
         throw new Error(error.message);
@@ -107,6 +126,27 @@ const doctorSlice = createSlice({
       .addCase(fetchDoctorById.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
+      })
+      
+      // Fetch Doctor Details (new detailed API)
+      .addCase(fetchDoctorDetails.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchDoctorDetails.fulfilled, (state, action) => {
+        state.loading = false;
+        // @ts-ignore
+        state.selectedDoctor = action.payload;
+        state.error = null;
+      })
+      .addCase(fetchDoctorDetails.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+      
+      // Reset all state on logout
+      .addCase(resetAllState, (state) => {
+        return initialState;
       });
   },
 });

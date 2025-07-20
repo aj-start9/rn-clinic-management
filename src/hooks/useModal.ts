@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { AlertType } from '../components/CustomModal';
 
 interface ModalState {
@@ -20,7 +20,11 @@ export const useModal = () => {
     message: '',
   });
 
-  const showModal = (
+  const hideModal = useCallback(() => {
+    setModalState(prev => ({ ...prev, isVisible: false }));
+  }, []);
+
+  const showModal = useCallback((
     type: AlertType,
     title: string,
     message: string,
@@ -41,29 +45,25 @@ export const useModal = () => {
       onPrimaryPress: options?.onPrimaryPress || hideModal,
       onSecondaryPress: options?.onSecondaryPress,
     });
-  };
+  }, [hideModal]);
 
-  const hideModal = () => {
-    setModalState(prev => ({ ...prev, isVisible: false }));
-  };
-
-  const showSuccess = (title: string, message: string, onPress?: () => void) => {
+  const showSuccess = useCallback((title: string, message: string, onPress?: () => void) => {
     showModal('success', title, message, { onPrimaryPress: onPress || hideModal });
-  };
+  }, [showModal, hideModal]);
 
-  const showError = (title: string, message: string, onPress?: () => void) => {
+  const showError = useCallback((title: string, message: string, onPress?: () => void) => {
     showModal('error', title, message, { onPrimaryPress: onPress || hideModal });
-  };
+  }, [showModal, hideModal]);
 
-  const showWarning = (title: string, message: string, onPress?: () => void) => {
+  const showWarning = useCallback((title: string, message: string, onPress?: () => void) => {
     showModal('warning', title, message, { onPrimaryPress: onPress || hideModal });
-  };
+  }, [showModal, hideModal]);
 
-  const showInfo = (title: string, message: string, onPress?: () => void) => {
+  const showInfo = useCallback((title: string, message: string, onPress?: () => void) => {
     showModal('info', title, message, { onPrimaryPress: onPress || hideModal });
-  };
+  }, [showModal, hideModal]);
 
-  const showConfirm = (
+  const showConfirm = useCallback((
     title: string,
     message: string,
     onConfirm: () => void,
@@ -81,9 +81,9 @@ export const useModal = () => {
         onCancel?.();
       },
     });
-  };
+  }, [showModal, hideModal]);
 
-  return {
+  return useMemo(() => ({
     modalState,
     showModal,
     hideModal,
@@ -92,5 +92,5 @@ export const useModal = () => {
     showWarning,
     showInfo,
     showConfirm,
-  };
+  }), [modalState, showModal, hideModal, showSuccess, showError, showWarning, showInfo, showConfirm]);
 };

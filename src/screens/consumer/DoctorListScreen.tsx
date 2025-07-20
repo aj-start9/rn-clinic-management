@@ -13,11 +13,11 @@ import {
 import { Button } from '../../components/Button';
 import { DoctorCard } from '../../components/DoctorCard';
 import { SearchBar } from '../../components/SearchBar';
-import { specialties } from '../../constants/dummyData';
 import { BorderRadius, Colors, Spacing, Typography } from '../../constants/theme';
 import { useNavigation } from '../../hooks/useNavigation';
 import { clearFilters, fetchDoctors, setFilters, setSearchQuery } from '../../redux/doctorSlice.supabase';
 import { useAppDispatch, useAppSelector } from '../../redux/hooks';
+import { fetchSpecialties } from '../../redux/specialtySlice';
 import { Doctor } from '../../types';
 import { TabParamList } from '../../types/navigation';
 
@@ -29,26 +29,38 @@ export const DoctorListScreen: React.FC = () => {
   const dispatch = useAppDispatch();
   
   const { doctors, loading, searchQuery, filters } = useAppSelector((state) => state.doctors);
+  const { specialties } = useAppSelector((state) => state.specialties);
   const [showFilters, setShowFilters] = useState(false);
   const [tempFilters, setTempFilters] = useState(filters);
 
   useEffect(() => {
     dispatch(fetchDoctors());
+    dispatch(fetchSpecialties());
     
     // Set initial specialty filter if passed from navigation
     if (route.params?.specialty) {
       dispatch(setFilters({ specialty: route.params.specialty }));
     }
+
+    // Cleanup function - runs when component unmounts
+    return () => {
+      dispatch(clearFilters());
+      dispatch(setSearchQuery(''));
+    };
   }, [dispatch, route.params?.specialty]);
 
   const filteredDoctors = doctors.filter((doctor: Doctor) => {
     const matchesSearch = doctor.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         doctor.specialty.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    const matchesSpecialty = !filters.specialty || doctor.specialty === filters.specialty;
+      (doctor.specialty_id.toLowerCase() === (searchQuery.toLowerCase()));
+
+    // More flexible specialty matching - check if doctor specialty contains the filter or vice versa
+    const matchesSpecialty = !filters.specialty ||
+      doctor.specialty_id === filters.specialty ||
+      doctor.specialty_id.toLowerCase().includes(filters.specialty.toLowerCase()) ||
+      filters.specialty.toLowerCase().includes(doctor.specialty_id.toLowerCase());
     const matchesRating = !filters.rating || doctor.rating >= filters.rating;
     const matchesExperience = !filters.experience || doctor.experience_years >= filters.experience;
-    
+
     return matchesSearch && matchesSpecialty && matchesRating && matchesExperience;
   });
 
@@ -86,34 +98,34 @@ export const DoctorListScreen: React.FC = () => {
         <View style={styles.modalHeader}>
           <Text style={styles.modalTitle}>Filters</Text>
           <TouchableOpacity onPress={() => setShowFilters(false)}>
-            <Ionicons name="close" size={24}/>
+            <Ionicons name="close" size={24} />
           </TouchableOpacity>
         </View>
 
         <View style={styles.filterSection}>
           <Text style={styles.filterLabel}>Specialty</Text>
           <View style={styles.specialtyGrid}>
-            {specialties.map((specialty) => (
+            {specialties.map((specialtyObj) => (
               <TouchableOpacity
-                key={specialty}
+                key={specialtyObj.id}
                 style={[
                   styles.specialtyChip,
-                  tempFilters.specialty === specialty && styles.specialtyChipSelected,
+                  tempFilters.specialty === specialtyObj.name && styles.specialtyChipSelected,
                 ]}
                 onPress={() =>
                   setTempFilters(prev => ({
                     ...prev,
-                    specialty: prev.specialty === specialty ? '' : specialty,
+                    specialty: prev.specialty === specialtyObj.name ? '' : specialtyObj.name,
                   }))
                 }
               >
                 <Text
                   style={[
                     styles.specialtyChipText,
-                    tempFilters.specialty === specialty && styles.specialtyChipTextSelected,
+                    tempFilters.specialty === specialtyObj.name && styles.specialtyChipTextSelected,
                   ]}
                 >
-                  {specialty}
+                  {specialtyObj.name}
                 </Text>
               </TouchableOpacity>
             ))}
@@ -239,11 +251,11 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.background,
   },
   header: {
-    padding: Spacing.lg,
+    padding: Spacing.md,
     paddingBottom: Spacing.md,
   },
   listContainer: {
-    padding: Spacing.lg,
+    padding: Spacing.md,
     paddingTop: 0,
   },
   emptyContainer: {
@@ -265,14 +277,14 @@ const styles = StyleSheet.create({
   modalContainer: {
     flex: 1,
     backgroundColor: Colors.background,
-    padding: Spacing.lg,
+    padding: Spacing.md,
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: Spacing.xl,
-    paddingTop: Spacing.lg,
+    paddingTop: Spacing.md,
   },
   modalTitle: {
     fontSize: Typography.sizes.xl,

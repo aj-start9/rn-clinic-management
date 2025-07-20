@@ -132,10 +132,12 @@ The app currently uses mock services for demonstration purposes. In production, 
 
 1. Set up Supabase project
 2. Configure authentication
-3. Set up database tables
+3. Run the SQL scripts from the `sql/` folder (see `sql/README.md`)
 4. Replace mock services with real API calls
 
 ### Database Schema (for production)
+
+The complete database schema is available in the `sql/` folder. Key tables include:
 
 ```sql
 -- Profiles table
@@ -209,8 +211,12 @@ For production deployment:
 1. **Set up Supabase**
    - Create a new Supabase project
    - Set up authentication
-   - Create database tables
-   - Configure Row Level Security (RLS)
+   - Run SQL scripts from the `sql/` folder in the following order:
+     1. `sql/supabase-setup.sql` - Database schema
+     2. `sql/fix-rls-policies.sql` - Security policies
+     3. `sql/QUICK_FIX.sql` - Database triggers
+     4. `sql/sample_data.sql` - Test data (optional)
+   - See `sql/README.md` for detailed instructions
 
 2. **Environment Variables**
    ```

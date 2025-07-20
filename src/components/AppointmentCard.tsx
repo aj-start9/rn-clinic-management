@@ -1,14 +1,14 @@
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import {
-    Image,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { BorderRadius, Colors, Shadow, Spacing, Typography } from '../constants/theme';
 import { Appointment } from '../types';
+import { Avatar } from './Avatar';
 import { Button } from './Button';
 
 interface AppointmentCardProps {
@@ -67,28 +67,29 @@ export const AppointmentCard: React.FC<AppointmentCardProps> = ({
 
   const displayName = userRole === 'consumer' 
     ? appointment.doctor?.name 
-    : appointment.user?.full_name;
+    : appointment.user?.name;
   
-  const displayImage = userRole === 'consumer' 
-    ? appointment.doctor?.photo_url 
-    : appointment.user?.avatar_url;
+  // For consumers viewing appointments: they see doctors (role = 'doctor')
+  // For doctors viewing appointments: they see patients/consumers (role = 'consumer')
+  const avatarRole = userRole === 'consumer' ? 'doctor' : 'consumer';
 
   return (
     <TouchableOpacity style={styles.container} onPress={onPress} activeOpacity={0.8}>
       <View style={styles.header}>
-        <Image 
-          source={{ uri: displayImage || 'https://via.placeholder.com/60' }} 
-          style={styles.avatar} 
+        <Avatar
+          name={displayName}
+          role={avatarRole}
+          size={50}
         />
         <View style={styles.info}>
           <Text style={styles.name}>{displayName}</Text>
           {userRole === 'consumer' && appointment.doctor && (
-            <Text style={styles.specialty}>{appointment.doctor.specialty}</Text>
+            <Text style={styles.specialty}>{appointment.doctor.specialty || 'General'}</Text>
           )}
           <View style={styles.dateTimeContainer}>
             <Ionicons name="calendar-outline" size={16} color={Colors.darkGray} />
             <Text style={styles.dateTime}>
-              {formatDate(appointment.date)} • {appointment.slot.time}
+              {formatDate(appointment.date)} • {appointment?.slot?.time}
             </Text>
           </View>
         </View>
@@ -103,7 +104,7 @@ export const AppointmentCard: React.FC<AppointmentCardProps> = ({
 
       <View style={styles.clinicContainer}>
         <Ionicons name="location-outline" size={16} color={Colors.darkGray} />
-        <Text style={styles.clinicText}>{appointment.clinic.name}</Text>
+        <Text style={styles.clinicText}>{appointment?.clinic?.name}</Text>
       </View>
 
       <View style={styles.statusContainer}>
@@ -112,12 +113,12 @@ export const AppointmentCard: React.FC<AppointmentCardProps> = ({
         </Text>
       </View>
 
-      {appointment.status === 'confirmed' && (
+      {appointment.status === 'pending' && (
         <View style={styles.actions}>
-          {userRole === 'doctor' && onComplete && (
+          {userRole === 'doctor' && (
             <Button
               title="Complete"
-              onPress={onComplete}
+              onPress={() => onComplete?.()}
               variant="primary"
               size="small"
               style={styles.actionButton}
@@ -151,14 +152,9 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     marginBottom: Spacing.md,
   },
-  avatar: {
-    width: 50,
-    height: 50,
-    borderRadius: BorderRadius.full,
-    marginRight: Spacing.md,
-  },
   info: {
     flex: 1,
+    marginLeft: Spacing.md,
   },
   name: {
     fontSize: Typography.sizes.md,

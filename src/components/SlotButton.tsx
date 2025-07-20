@@ -1,8 +1,8 @@
 import React from 'react';
 import {
-    StyleSheet,
-    Text,
-    TouchableOpacity,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
 } from 'react-native';
 import { BorderRadius, Colors, Spacing, Typography } from '../constants/theme';
 import { TimeSlot } from '../types';
@@ -21,20 +21,20 @@ export const SlotButton: React.FC<SlotButtonProps> = ({
   const buttonStyle = [
     styles.button,
     selected && styles.selectedButton,
-    !slot.isAvailable && styles.disabledButton,
+    !slot.available && styles.disabledButton,
   ];
 
   const textStyle = [
     styles.text,
     selected && styles.selectedText,
-    !slot.isAvailable && styles.disabledText,
+    !slot.available && styles.disabledText,
   ];
-
+  console.log('SlotButton rendered', slot, 'selected:', selected, 'available:', slot.available);
   return (
     <TouchableOpacity
       style={buttonStyle}
       onPress={onPress}
-      disabled={!slot.isAvailable}
+      disabled={!slot.available}
       activeOpacity={0.8}
     >
       <Text style={textStyle}>{slot.time}</Text>
@@ -52,7 +52,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.white,
     marginRight: Spacing.sm,
     marginBottom: Spacing.sm,
-    minWidth: 80,
+    minWidth: 60,
     alignItems: 'center',
   },
   selectedButton: {

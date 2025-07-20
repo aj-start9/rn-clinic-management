@@ -12,6 +12,7 @@ import { ProfileScreen } from '../screens/ProfileScreen';
 
 // Doctor Screens
 import { DoctorDashboardScreen } from '../screens/doctor/DashboardScreen';
+import { EnhancedAvailabilityScreen } from '../screens/doctor/EnhancedAvailabilityScreen';
 
 const Tab = createBottomTabNavigator();
 
@@ -67,7 +68,7 @@ export const MainTabNavigator: React.FC = () => {
         />
         <Tab.Screen 
           name="DoctorAvailability" 
-          component={ProfileScreen} // Placeholder
+          component={EnhancedAvailabilityScreen}
           options={{ title: 'Availability' }}
         />
         <Tab.Screen 
@@ -121,11 +122,6 @@ export const MainTabNavigator: React.FC = () => {
         name="Home" 
         component={ConsumerHomeScreen}
         options={{ title: 'Home' }}
-      />
-      <Tab.Screen 
-        name="Search" 
-        component={DoctorListScreen}
-        options={{ title: 'Search' }}
       />
       <Tab.Screen 
         name="Doctors" 

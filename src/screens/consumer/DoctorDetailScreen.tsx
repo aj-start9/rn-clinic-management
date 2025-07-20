@@ -2,20 +2,20 @@ import { Ionicons } from '@expo/vector-icons';
 import { RouteProp, useRoute } from '@react-navigation/native';
 import React, { useEffect, useState } from 'react';
 import {
-    FlatList,
-    Image,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  FlatList,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
+import { Avatar } from '../../components/Avatar';
 import { Button } from '../../components/Button';
 import { SlotButton } from '../../components/SlotButton';
 import { BorderRadius, Colors, Shadow, Spacing, Typography } from '../../constants/theme';
 import { useNavigation } from '../../hooks/useNavigation';
 import { setSelectedDate, setSelectedSlot } from '../../redux/appointmentSlice.supabase';
-import { fetchDoctorById } from '../../redux/doctorSlice.supabase';
+import { fetchDoctorDetails } from '../../redux/doctorSlice.supabase';
 import { useAppDispatch, useAppSelector } from '../../redux/hooks';
 import { Clinic, TimeSlot } from '../../types';
 import { RootStackParamList } from '../../types/navigation';
@@ -26,30 +26,50 @@ export const DoctorDetailScreen: React.FC = () => {
   const navigation = useNavigation();
   const route = useRoute<DoctorDetailRouteProp>();
   const dispatch = useAppDispatch();
-  
-  const { selectedDoctor, loading } = useAppSelector((state) => state.doctors);
-  const { selectedDate, selectedSlot } = useAppSelector((state) => state.appointments);
-  
-  const [selectedClinic, setSelectedClinic] = useState<Clinic | null>(null);
 
+  const { selectedDoctor, loading, error } = useAppSelector((state) => state.doctors);
+  const { selectedDate, selectedSlot } = useAppSelector((state) => state.appointments);
+
+  const [selectedClinic, setSelectedClinic] = useState<Clinic | null>(null);
   const doctorId = route.params.doctorId;
 
   useEffect(() => {
     if (doctorId) {
-      dispatch(fetchDoctorById(doctorId));
+      dispatch(fetchDoctorDetails(doctorId));
     }
-  }, [dispatch, doctorId]);
-
-  useEffect(() => {
-    if (selectedDoctor?.clinics.length) {
+  }, [dispatch, doctorId]); useEffect(() => {
+    if (selectedDoctor?.clinics?.length) {
       setSelectedClinic(selectedDoctor.clinics[0]);
     }
   }, [selectedDoctor]);
 
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <Text style={styles.loadingText}>Loading doctor details...</Text>
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={styles.errorContainer}>
+        <Ionicons name="alert-circle-outline" size={48} color={Colors.error} />
+        <Text style={styles.errorText}>Failed to load doctor details</Text>
+        <TouchableOpacity
+          style={styles.retryButton}
+          onPress={() => dispatch(fetchDoctorDetails(doctorId))}
+        >
+          <Text style={styles.retryText}>Retry</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
   if (!selectedDoctor) {
     return (
       <View style={styles.loadingContainer}>
-        <Text>Loading...</Text>
+        <Text style={styles.loadingText}>Doctor not found</Text>
       </View>
     );
   }
@@ -101,28 +121,32 @@ export const DoctorDetailScreen: React.FC = () => {
     }
   };
 
-  const availableDates = selectedDoctor.available_slots || [];
-  const slotsForSelectedDate = selectedDate 
+  const availableDates = selectedClinic && selectedDoctor.available_slots || [];
+  const slotsForSelectedDate = selectedDate
     ? availableDates.find(slot => slot.date === selectedDate)?.slots || []
     : [];
 
   const filteredSlots = selectedClinic
     ? slotsForSelectedDate.filter(slot => slot.clinic_id === selectedClinic.id)
-    : slotsForSelectedDate;
+    : [];
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       {/* Doctor Info */}
       <View style={styles.doctorInfo}>
-        <Image source={{ uri: selectedDoctor.photo_url }} style={styles.doctorImage} />
-        <View style={styles.doctorDetails}>
+        <Avatar
+          name={selectedDoctor.name}
+          role="doctor"
+          size={100}
+        />
+        <View style={[styles.doctorDetails, { marginTop: Spacing.sm }]}>
           <View style={styles.nameContainer}>
             <Text style={styles.doctorName}>{selectedDoctor.name}</Text>
             {selectedDoctor.verified && (
               <Ionicons name="checkmark-circle" size={20} color={Colors.success} />
             )}
           </View>
-          <Text style={styles.specialty}>{selectedDoctor.specialty}</Text>
+          <Text style={styles.specialty}>{selectedDoctor.specialty_id}</Text>
           <View style={styles.ratingContainer}>
             <View style={styles.stars}>
               {renderStars(selectedDoctor.rating)}
@@ -144,25 +168,44 @@ export const DoctorDetailScreen: React.FC = () => {
 
       {/* Clinics */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Clinics</Text>
-        {selectedDoctor.clinics.map((clinic) => (
+        <Text style={styles.sectionTitle}>Clinics ({selectedDoctor?.clinics?.length || 0})</Text>
+        {selectedDoctor?.clinics?.length ? selectedDoctor.clinics.map((clinic) => (
           <TouchableOpacity
             key={clinic.id}
             style={[
               styles.clinicCard,
               selectedClinic?.id === clinic.id && styles.clinicCardSelected,
             ]}
-            onPress={() => setSelectedClinic(clinic)}
+            onPress={() => {
+              setSelectedClinic(clinic);
+              dispatch(setSelectedDate(null)); // Reset date when clinic changes
+              dispatch(setSelectedSlot(null)); // Reset slot when clinic changes
+            }}
           >
             <View style={styles.clinicInfo}>
               <Text style={styles.clinicName}>{clinic.name}</Text>
               <Text style={styles.clinicAddress}>{clinic.address}</Text>
+              {clinic.phone && (
+                <Text style={styles.clinicContact}>📞 {clinic.phone}</Text>
+              )}
+              {clinic.email && (
+                <Text style={styles.clinicContact}>✉️ {clinic.email}</Text>
+              )}
             </View>
             <View style={styles.clinicIcon}>
-              <Ionicons name="location" size={20} color={Colors.primary} />
+              <Ionicons
+                name={selectedClinic?.id === clinic.id ? "radio-button-on" : "radio-button-off"}
+                size={24}
+                color={selectedClinic?.id === clinic.id ? Colors.primary : Colors.lightGray}
+              />
             </View>
           </TouchableOpacity>
-        ))}
+        )) : (
+          <View style={styles.emptyState}>
+            <Ionicons name="location-outline" size={48} color={Colors.lightGray} />
+            <Text style={styles.emptyText}>No clinics available</Text>
+          </View>
+        )}
       </View>
 
       {/* Available Dates */}
@@ -176,7 +219,7 @@ export const DoctorDetailScreen: React.FC = () => {
           renderItem={({ item }) => {
             const date = new Date(item.date);
             const isSelected = selectedDate === item.date;
-            
+
             return (
               <TouchableOpacity
                 style={[
@@ -209,14 +252,17 @@ export const DoctorDetailScreen: React.FC = () => {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Available Times</Text>
           <View style={styles.slotsContainer}>
-            {filteredSlots.map((slot) => (
-              <SlotButton
-                key={slot.id}
-                slot={slot}
-                selected={selectedSlot?.id === slot.id}
-                onPress={() => handleSlotSelect(slot)}
-              />
-            ))}
+            {filteredSlots.map((slot) => {
+              console.log('Slot:', slot);
+              return (
+                <SlotButton
+                  key={slot.id}
+                  slot={slot}
+                  selected={selectedSlot?.id === slot.id}
+                  onPress={() => handleSlotSelect(slot)}
+                />
+              )
+            })}
           </View>
           {filteredSlots.length === 0 && (
             <Text style={styles.noSlotsText}>
@@ -252,21 +298,46 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: Colors.background,
+  },
+  loadingText: {
+    fontSize: Typography.sizes.md,
+    color: Colors.text.secondary,
+    marginTop: Spacing.md,
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: Spacing.xl,
+    backgroundColor: Colors.background,
+  },
+  errorText: {
+    fontSize: Typography.sizes.md,
+    color: Colors.error,
+    marginTop: Spacing.md,
+    marginBottom: Spacing.lg,
+    textAlign: 'center',
+  },
+  retryButton: {
+    backgroundColor: Colors.primary,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    borderRadius: BorderRadius.md,
+  },
+  retryText: {
+    color: Colors.white,
+    fontSize: Typography.sizes.sm,
+    fontWeight: Typography.weights.medium,
   },
   doctorInfo: {
     backgroundColor: Colors.white,
-    padding: Spacing.lg,
+    padding: Spacing.md,
     ...Shadow.md,
   },
-  doctorImage: {
-    width: 120,
-    height: 120,
-    borderRadius: BorderRadius.full,
-    alignSelf: 'center',
-    marginBottom: Spacing.md,
-  },
   doctorDetails: {
-    alignItems: 'center',
+    flex: 1,
+    marginLeft: Spacing.md,
   },
   nameContainer: {
     flexDirection: 'row',
@@ -299,7 +370,8 @@ const styles = StyleSheet.create({
   section: {
     backgroundColor: Colors.white,
     marginTop: Spacing.md,
-    padding: Spacing.lg,
+    padding: Spacing.md,
+    paddingVertical: Spacing.sm,
   },
   sectionTitle: {
     fontSize: Typography.sizes.lg,
@@ -338,8 +410,23 @@ const styles = StyleSheet.create({
     fontSize: Typography.sizes.sm,
     color: Colors.darkGray,
   },
+  clinicContact: {
+    fontSize: Typography.sizes.sm,
+    color: Colors.text.secondary,
+    marginTop: Spacing.xs,
+  },
   clinicIcon: {
     marginLeft: Spacing.md,
+  },
+  emptyState: {
+    alignItems: 'center',
+    padding: Spacing.xl,
+  },
+  emptyText: {
+    fontSize: Typography.sizes.md,
+    color: Colors.text.secondary,
+    marginTop: Spacing.md,
+    textAlign: 'center',
   },
   datesList: {
     paddingHorizontal: Spacing.xs,
@@ -350,7 +437,7 @@ const styles = StyleSheet.create({
     padding: Spacing.md,
     marginHorizontal: Spacing.xs,
     alignItems: 'center',
-    minWidth: 60,
+    minWidth: 70,
   },
   dateCardSelected: {
     backgroundColor: Colors.primary,

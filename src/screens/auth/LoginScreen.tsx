@@ -1,5 +1,5 @@
 import { useNavigation } from '@react-navigation/native';
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
@@ -10,170 +10,199 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 import { Button } from '../../components/Button';
 import { CustomModal } from '../../components/CustomModal';
 import { BorderRadius, Colors, Spacing, Typography } from '../../constants/theme';
 import { useModal } from '../../hooks/useModal';
-import { signInUser, signUpUser } from '../../redux/authSlice.supabase';
+import { signInUser } from '../../redux/authSlice.supabase';
 import { useAppDispatch, useAppSelector } from '../../redux/hooks';
 
-export const LoginScreen: React.FC = () => {
-  const [isSignUp, setIsSignUp] = useState(false);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [fullName, setFullName] = useState('');
-  const [role, setRole] = useState<'consumer' | 'doctor'>('consumer');
+export const LoginScreen: React.FC = React.memo(() => {
   
   const dispatch = useAppDispatch();
-  const { loading, error } = useAppSelector((state) => state.auth);
+  // Use a more specific selector to prevent unnecessary re-renders
+  const loading = useAppSelector((state) => state.auth.loading);
   const navigation = useNavigation();
-  const { modalState, showError, showSuccess, hideModal } = useModal();
+  const { modalState, showError, hideModal } = useModal();
+  
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+  });
+  
+  const [showPassword, setShowPassword] = useState(false);
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
-  const handleAuth = async () => {
-    if (!email.trim() || !password.trim()) {
-      showError('Error', 'Please fill in all fields');
-      return;
+  // Memoized input handlers to prevent unnecessary re-renders
+  const handleEmailChange = useCallback((text: string) => {
+    setFormData(prev => ({ ...prev, email: text }));
+    if (formErrors.email) {
+      setFormErrors(prev => ({ ...prev, email: '' }));
+    }
+  }, [formErrors.email]);
+
+  const handlePasswordChange = useCallback((text: string) => {
+    setFormData(prev => ({ ...prev, password: text }));
+    if (formErrors.password) {
+      setFormErrors(prev => ({ ...prev, password: '' }));
+    }
+  }, [formErrors.password]);
+
+  const togglePasswordVisibility = useCallback(() => {
+    setShowPassword(prev => !prev);
+  }, []);
+
+  const validateForm = useCallback(() => {
+    const errors: Record<string, string> = {};
+
+    if (!formData.email.trim()) {
+      errors.email = 'Email is required';
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      errors.email = 'Please enter a valid email';
     }
 
-    if (isSignUp && !fullName.trim()) {
-      showError('Error', 'Please enter your full name');
-      return;
+    if (!formData.password) {
+      errors.password = 'Password is required';
+    } else if (formData.password.length < 6) {
+      errors.password = 'Password must be at least 6 characters';
     }
 
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  }, [formData.email, formData.password]);
+
+  const handleLogin = useCallback(async () => {
+    if (!validateForm()) {
+      return;
+    }
+   
     try {
-      if (isSignUp) {
-        await dispatch(signUpUser({ email, password, role, fullName })).unwrap();
-        showSuccess('Success', 'Account created successfully! Please check your email for verification.');
+      const response = await dispatch(signInUser({
+        email: formData.email.trim(),
+        password: formData.password,
+      })).unwrap();
+      if (response && response.user) {
+        console.log('Login successful');
       } else {
-        await dispatch(signInUser({ email, password })).unwrap();
+        showError('Login Failed', 'Login was unsuccessful. Please check your credentials.');
       }
-    } catch (err: any) {
-      showError('Error', err.message || 'Authentication failed');
+    } catch (error: any) {
+      let errorMessage = 'An error occurred during login';
+      showError('Login Failed', error || errorMessage);
     }
-  };
+  }, [validateForm, dispatch, showError, formData.email, formData.password]);
+
+  const navigateToSignup = useCallback(() => {
+    navigation.navigate('Signup' as never);
+  }, [navigation]);
+
+  const navigateToForgotPassword = useCallback(() => {
+    showError('Coming Soon', 'Forgot password feature will be available soon');
+  }, [showError]);
 
   return (
-    <KeyboardAvoidingView 
-      style={styles.container} 
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        <View style={styles.header}>
-          <Text style={styles.title}>
-            {isSignUp ? 'Create Account' : 'Welcome Back'}
-          </Text>
-          <Text style={styles.subtitle}>
-            {isSignUp 
-              ? 'Sign up to book your appointments' 
-              : 'Sign in to your account'
-            }
-          </Text>
-        </View>
+    <SafeAreaView style={styles.container}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.keyboardAvoid}
+      >
+        <ScrollView 
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.header}>
+            <Text style={styles.title}>Welcome Back</Text>
+            <Text style={styles.subtitle}>Sign in to your account</Text>
+          </View>
 
-        <View style={styles.form}>
-          {isSignUp && (
-            <>
-              <View style={styles.inputContainer}>
-                <Text style={styles.label}>Full Name</Text>
+          <View style={styles.form}>
+            {/* Email Input */}
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>Email</Text>
+              <View style={[styles.inputWrapper, formErrors.email && styles.inputError]}>
+                <Icon name="email" size={20} color={Colors.text.secondary} style={styles.inputIcon} />
                 <TextInput
                   style={styles.input}
-                  value={fullName}
-                  onChangeText={setFullName}
-                  placeholder="Enter your full name"
-                  placeholderTextColor={Colors.darkGray}
+                  placeholder="Enter your email"
+                  placeholderTextColor={Colors.text.secondary}
+                  value={formData.email}
+                  onChangeText={handleEmailChange}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  editable={!loading}
                 />
               </View>
+              {formErrors.email && (
+                <Text style={styles.errorText}>{formErrors.email}</Text>
+              )}
+            </View>
 
-              <View style={styles.roleContainer}>
-                <Text style={styles.label}>I am a:</Text>
-                <View style={styles.roleButtons}>
-                  <TouchableOpacity
-                    style={[
-                      styles.roleButton,
-                      role === 'consumer' && styles.roleButtonSelected,
-                    ]}
-                    onPress={() => setRole('consumer')}
-                  >
-                    <Text
-                      style={[
-                        styles.roleButtonText,
-                        role === 'consumer' && styles.roleButtonTextSelected,
-                      ]}
-                    >
-                      Patient
-                    </Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[
-                      styles.roleButton,
-                      role === 'doctor' && styles.roleButtonSelected,
-                    ]}
-                    onPress={() => setRole('doctor')}
-                  >
-                    <Text
-                      style={[
-                        styles.roleButtonText,
-                        role === 'doctor' && styles.roleButtonTextSelected,
-                      ]}
-                    >
-                      Doctor
-                    </Text>
-                  </TouchableOpacity>
-                </View>
+            {/* Password Input */}
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>Password</Text>
+              <View style={[styles.inputWrapper, formErrors.password && styles.inputError]}>
+                <Icon name="lock" size={20} color={Colors.text.secondary} style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Enter your password"
+                  placeholderTextColor={Colors.text.secondary}
+                  value={formData.password}
+                  onChangeText={handlePasswordChange}
+                  secureTextEntry={!showPassword}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  editable={!loading}
+                />
+                <TouchableOpacity
+                  onPress={togglePasswordVisibility}
+                  style={styles.eyeIcon}
+                  disabled={loading}
+                >
+                  <Icon
+                    name={showPassword ? 'visibility' : 'visibility-off'}
+                    size={20}
+                    color={Colors.text.secondary}
+                  />
+                </TouchableOpacity>
               </View>
-            </>
-          )}
+              {formErrors.password && (
+                <Text style={styles.errorText}>{formErrors.password}</Text>
+              )}
+            </View>
 
-          <View style={styles.inputContainer}>
-            <Text style={styles.label}>Email</Text>
-            <TextInput
-              style={styles.input}
-              value={email}
-              onChangeText={setEmail}
-              placeholder="Enter your email"
-              keyboardType="email-address"
-              autoCapitalize="none"
-              placeholderTextColor={Colors.darkGray}
+            {/* Forgot Password */}
+            <TouchableOpacity
+              onPress={navigateToForgotPassword}
+              style={styles.forgotPassword}
+              disabled={loading}
+            >
+              <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+            </TouchableOpacity>
+
+            {/* Login Button */}
+            <Button
+              title="Sign In"
+              onPress={handleLogin}
+              loading={loading}
+              loadingText="Signing In..."
+              style={styles.loginButton}
             />
+
+            {/* Sign Up Link */}
+            <View style={styles.signupContainer}>
+              <Text style={styles.signupText}>Don&apos;t have an account? </Text>
+              <TouchableOpacity onPress={navigateToSignup} disabled={loading}>
+                <Text style={[styles.signupLink, loading && styles.linkDisabled]}>
+                  Sign Up
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
-
-          <View style={styles.inputContainer}>
-            <Text style={styles.label}>Password</Text>
-            <TextInput
-              style={styles.input}
-              value={password}
-              onChangeText={setPassword}
-              placeholder="Enter your password"
-              secureTextEntry
-              placeholderTextColor={Colors.darkGray}
-            />
-          </View>
-
-          {error && (
-            <Text style={styles.errorText}>{error}</Text>
-          )}
-
-          <Button
-            title={isSignUp ? 'Sign Up' : 'Sign In'}
-            onPress={handleAuth}
-            loading={loading}
-            style={styles.authButton}
-          />
-
-          <TouchableOpacity
-            style={styles.switchButton}
-            onPress={() => setIsSignUp(!isSignUp)}
-          >
-            <Text style={styles.switchText}>
-              {isSignUp 
-                ? 'Already have an account? Sign In' 
-                : "Don't have an account? Sign Up"
-              }
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
-
+        </ScrollView>
+      </KeyboardAvoidingView>
       <CustomModal
         isVisible={modalState.isVisible}
         type={modalState.type}
@@ -183,98 +212,112 @@ export const LoginScreen: React.FC = () => {
         secondaryButtonText={modalState.secondaryButtonText}
         onPrimaryPress={modalState.onPrimaryPress || hideModal}
         onSecondaryPress={modalState.onSecondaryPress}
+        onBackdropPress={hideModal}
       />
-    </KeyboardAvoidingView>
+    </SafeAreaView>
   );
-};
+});
+
+LoginScreen.displayName = 'LoginScreen';
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,
   },
+  keyboardAvoid: {
+    flex: 1,
+  },
   scrollContent: {
     flexGrow: 1,
-    justifyContent: 'center',
-    padding: Spacing.lg,
+    paddingHorizontal: Spacing.lg,
   },
   header: {
+    paddingTop: Spacing.xxl,
+    paddingBottom: Spacing.xl,
     alignItems: 'center',
-    marginBottom: Spacing.xxl,
   },
   title: {
-    fontSize: Typography.sizes.xxl,
-    fontWeight: Typography.weights.bold,
+    ...Typography.heading1,
     color: Colors.text.primary,
     marginBottom: Spacing.sm,
   },
   subtitle: {
-    fontSize: Typography.sizes.md,
-    color: Colors.darkGray,
+    ...Typography.body,
+    color: Colors.text.secondary,
     textAlign: 'center',
   },
   form: {
-    width: '100%',
+    flex: 1,
   },
   inputContainer: {
     marginBottom: Spacing.lg,
   },
   label: {
-    fontSize: Typography.sizes.md,
-    fontWeight: Typography.weights.medium,
+    ...Typography.caption,
     color: Colors.text.primary,
     marginBottom: Spacing.sm,
+    fontWeight: Typography.weights.medium,
+  },
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: BorderRadius.md,
+    backgroundColor: Colors.white,
+    paddingHorizontal: Spacing.md,
+    minHeight: 48,
+  },
+  inputError: {
+    borderColor: Colors.error,
+  },
+  inputIcon: {
+    marginRight: Spacing.sm,
   },
   input: {
-    backgroundColor: Colors.lightGray,
-    borderRadius: BorderRadius.md,
-    padding: Spacing.md,
-    fontSize: Typography.sizes.md,
-    color: Colors.text.primary,
-  },
-  roleContainer: {
-    marginBottom: Spacing.lg,
-  },
-  roleButtons: {
-    flexDirection: 'row',
-    gap: Spacing.sm,
-  },
-  roleButton: {
     flex: 1,
-    padding: Spacing.md,
-    borderRadius: BorderRadius.md,
-    borderWidth: 1,
-    borderColor: Colors.lightGray,
-    backgroundColor: Colors.white,
-    alignItems: 'center',
-  },
-  roleButtonSelected: {
-    backgroundColor: Colors.primary,
-    borderColor: Colors.primary,
-  },
-  roleButtonText: {
-    fontSize: Typography.sizes.md,
-    fontWeight: Typography.weights.medium,
+    ...Typography.body,
     color: Colors.text.primary,
+    paddingVertical: Spacing.sm,
   },
-  roleButtonTextSelected: {
-    color: Colors.white,
+  eyeIcon: {
+    padding: Spacing.xs,
   },
   errorText: {
+    ...Typography.caption,
     color: Colors.error,
-    fontSize: Typography.sizes.sm,
-    marginBottom: Spacing.md,
-    textAlign: 'center',
+    marginTop: Spacing.xs,
   },
-  authButton: {
-    marginBottom: Spacing.lg,
+  forgotPassword: {
+    alignSelf: 'flex-end',
+    marginBottom: Spacing.xl,
   },
-  switchButton: {
-    alignItems: 'center',
-  },
-  switchText: {
-    fontSize: Typography.sizes.md,
+  forgotPasswordText: {
+    ...Typography.body,
     color: Colors.primary,
     fontWeight: Typography.weights.medium,
   },
+  loginButton: {
+    marginBottom: Spacing.lg,
+  },
+  signupContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: Spacing.lg,
+  },
+  signupText: {
+    ...Typography.body,
+    color: Colors.text.secondary,
+  },
+  signupLink: {
+    ...Typography.body,
+    color: Colors.primary,
+    fontWeight: Typography.weights.medium,
+  },
+  linkDisabled: {
+    opacity: 0.5,
+  },
 });
+

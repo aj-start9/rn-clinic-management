@@ -129,7 +129,10 @@ export const supabase = {
   }
 };
 
-// Database helpers - updated to use async client
+// =====================================================
+// AUTHENTICATION FUNCTIONS
+// =====================================================
+
 export const signUp = async (email: string, password: string, role: 'consumer' | 'doctor', fullName: string) => {
   try {
     const client = await getSupabase();
@@ -172,66 +175,6 @@ export const signUp = async (email: string, password: string, role: 'consumer' |
       return { data, error: null };
     }
 
-    // Create profile only if user was created successfully
-    if (data.user) {
-      try {
-        console.log('Attempting to create profile for user:', data.user.id);
-        
-        // Try to create profile with the authenticated user's session
-        const { error: profileError } = await client
-          .from('profiles')
-          .insert([
-            {
-              user_id: data.user.id,
-              role,
-              full_name: fullName,
-            }
-          ]);
-
-        if (profileError) {
-          console.error('Profile creation error:', profileError);
-          
-          // If it's an RLS error, provide specific guidance
-          if (profileError.code === '42501') {
-            console.error('❌ RLS Policy Error: The profiles table has Row Level Security enabled but no policy allows profile creation during signup.');
-            console.error('💡 Solution: Run the SQL commands in fix-rls-policies.sql in your Supabase dashboard.');
-            console.error('💡 Or set up a database trigger to automatically create profiles.');
-          }
-          
-          // Don't fail the signup - profile can be created later
-          // Return success but log the profile creation issue
-          return { 
-            data: {
-              ...data,
-              profileCreated: false,
-              profileError: profileError.message
-            }, 
-            error: null 
-          };
-        } else {
-          console.log('✅ Profile created successfully');
-          return { 
-            data: {
-              ...data,
-              profileCreated: true
-            }, 
-            error: null 
-          };
-        }
-      } catch (profileException) {
-        console.error('Profile creation exception:', profileException);
-        // Don't fail the signup if profile creation fails
-        return { 
-          data: {
-            ...data,
-            profileCreated: false,
-            profileError: profileException instanceof Error ? profileException.message : 'Unknown profile creation error'
-          }, 
-          error: null 
-        };
-      }
-    }
-
     return { data, error };
 
   } catch (exception) {
@@ -245,320 +188,6 @@ export const signUp = async (email: string, password: string, role: 'consumer' |
     };
   }
 };
-
-export const signIn = async (email: string, password: string) => {
-  const client = await getSupabase();
-  return await client.auth.signInWithPassword({
-    email,
-    password,
-  });
-};
-
-export const signOut = async () => {
-  const client = await getSupabase();
-  return await client.auth.signOut();
-};
-
-export const getCurrentUser = async () => {
-  const client = await getSupabase();
-  const { data: { user } } = await client.auth.getUser();
-  
-  if (user) {
-    const { data: profile } = await client
-      .from('profiles')
-      .select('*')
-      .eq('id', user.id)
-      .single();
-    
-    return {
-      ...user,
-      role: profile?.role,
-      full_name: profile?.full_name,
-      avatar_url: profile?.avatar_url,
-      location: profile?.location,
-    };
-  }
-  
-  return null;
-};
-
-// Doctors
-export const getDoctors = async () => {
-  const client = await getSupabase();
-  const { data, error } = await client
-    .from('doctors')
-    .select('*')
-    .order('rating', { ascending: false });
-  
-  return { data, error };
-};
-
-export const getDoctorById = async (id: string) => {
-  const client = await getSupabase();
-  const { data, error } = await client
-    .from('doctors')
-    .select('*')
-    .eq('id', id)
-    .single();
-  
-  return { data, error };
-};
-
-// Appointments
-export const createAppointment = async (appointment: {
-  doctor_id: string;
-  user_id: string;
-  clinic: any;
-  date: string;
-  slot: any;
-  status: string;
-}) => {
-  const client = await getSupabase();
-  const { data, error } = await client
-    .from('appointments')
-    .insert([appointment])
-    .select()
-    .single();
-  
-  return { data, error };
-};
-
-export const getUserAppointments = async (userId: string) => {
-  const client = await getSupabase();
-  const { data, error } = await client
-    .from('appointments')
-    .select(`
-      *,
-      doctor:doctors(*)
-    `)
-    .eq('user_id', userId)
-    .order('date', { ascending: true });
-  
-  return { data, error };
-};
-
-export const getDoctorAppointments = async (doctorId: string) => {
-  const client = await getSupabase();
-  const { data, error } = await client
-    .from('appointments')
-    .select(`
-      *,
-      user:profiles(*)
-    `)
-    .eq('doctor_id', doctorId)
-    .order('date', { ascending: true });
-  
-  return { data, error };
-};
-
-export const updateAppointmentStatus = async (appointmentId: string, status: string) => {
-  const client = await getSupabase();
-  const { data, error } = await client
-    .from('appointments')
-    .update({ status })
-    .eq('id', appointmentId)
-    .select()
-    .single();
-  
-  return { data, error };
-};
-
-// Test function to debug Supabase connection
-export const testSupabaseConnection = async () => {
-  try {
-    console.log('Testing Supabase connection...');
-    const client = await getSupabase();
-    
-    if (!client) {
-      throw new Error('Client is null');
-    }
-    
-    if (!client.auth) {
-      throw new Error('Auth service not available');
-    }
-    
-    // Test basic auth functionality
-    const { data: { user } } = await client.auth.getUser();
-    console.log('Current user check successful:', user ? 'User logged in' : 'No user');
-    
-    // Test database connection
-    const { data, error } = await client.from('profiles').select('count').limit(1);
-    if (error) {
-      console.error('Database test failed:', error);
-      return { success: false, error: error.message };
-    }
-    
-    console.log('✅ Supabase connection test successful');
-    return { success: true, error: null };
-  } catch (error) {
-    console.error('❌ Supabase connection test failed:', error);
-    return { 
-      success: false, 
-      error: error instanceof Error ? error.message : 'Unknown error' 
-    };
-  }
-};
-
-// Utility function to debug signup issues step by step
-export const debugSignUpProcess = async (email: string, password: string, role: 'consumer' | 'doctor', fullName: string) => {
-  const debugInfo = {
-    step: '',
-    success: false,
-    error: null as any,
-    details: {} as any
-  };
-
-  try {
-    debugInfo.step = 'Getting Supabase client';
-    console.log('🔄 Step 1: Getting Supabase client...');
-    const client = await getSupabase();
-    
-    if (!client) {
-      throw new Error('Supabase client is null');
-    }
-    debugInfo.details.clientAvailable = true;
-
-    debugInfo.step = 'Checking auth service';
-    console.log('🔄 Step 2: Checking auth service...');
-    if (!client.auth) {
-      throw new Error('Auth service not available');
-    }
-    debugInfo.details.authServiceAvailable = true;
-
-    debugInfo.step = 'Attempting signup';
-    console.log('🔄 Step 3: Attempting signup...', { email, role, fullName });
-    
-    const signUpResult = await client.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          role,
-          full_name: fullName,
-        }
-      }
-    });
-
-    debugInfo.details.signUpResponse = {
-      hasUser: !!signUpResult.data?.user,
-      hasSession: !!signUpResult.data?.session,
-      hasError: !!signUpResult.error,
-      errorMessage: signUpResult.error?.message || null
-    };
-
-    if (signUpResult.error) {
-      debugInfo.error = signUpResult.error;
-      debugInfo.step = 'Signup failed';
-      console.error('❌ Signup failed:', signUpResult.error);
-      return debugInfo;
-    }
-
-    debugInfo.step = 'Signup successful';
-    debugInfo.success = true;
-    console.log('✅ Signup successful!');
-    
-    return debugInfo;
-
-  } catch (error) {
-    debugInfo.error = error;
-    debugInfo.success = false;
-    console.error(`❌ Debug failed at step "${debugInfo.step}":`, error);
-    return debugInfo;
-  }
-};
-
-// Alternative Supabase client configuration for problematic environments
-export const createSimpleSupabaseClient = () => {
-  try {
-    return createClient(supabaseUrl, supabaseAnonKey, {
-      auth: {
-        storage: AsyncStorage,
-        autoRefreshToken: true,
-        persistSession: true,
-        detectSessionInUrl: false,
-        // Use password-based auth only (no PKCE)
-        flowType: 'implicit',
-      },
-      global: {
-        headers: {
-          'X-Client-Info': 'supabase-js-react-native-simple',
-        },
-      },
-    });
-  } catch (error) {
-    console.error('Failed to create simple Supabase client:', error);
-    return null;
-  }
-};
-
-// Helper function to create profile separately (useful if RLS blocks during signup)
-export const createUserProfile = async (userId: string, role: 'consumer' | 'doctor', fullName: string) => {
-  try {
-    const client = await getSupabase();
-    
-    console.log('Creating profile for user:', { userId, role, fullName });
-    
-    const { data, error } = await client
-      .from('profiles')
-      .insert([
-        {
-          id: userId,
-          role,
-          full_name: fullName,
-        }
-      ])
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Profile creation error:', error);
-      
-      if (error.code === '42501') {
-        console.error('❌ RLS Policy prevents profile creation. Check your Supabase policies.');
-      }
-      
-      return { data: null, error };
-    }
-
-    console.log('✅ Profile created successfully:', data);
-    return { data, error: null };
-    
-  } catch (exception) {
-    console.error('Profile creation exception:', exception);
-    return { 
-      data: null, 
-      error: { 
-        message: exception instanceof Error ? exception.message : 'Unknown profile creation error',
-        code: 'EXCEPTION'
-      } 
-    };
-  }
-};
-
-// Function to check if user profile exists
-export const getUserProfile = async (userId: string) => {
-  try {
-    const client = await getSupabase();
-    
-    const { data, error } = await client
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single();
-
-    return { data, error };
-  } catch (exception) {
-    console.error('Get profile exception:', exception);
-    return { 
-      data: null, 
-      error: { 
-        message: exception instanceof Error ? exception.message : 'Unknown error',
-        code: 'EXCEPTION'
-      } 
-    };
-  }
-};
-
 
 // Updated signup function that relies on database trigger for profile creation
 export const signUpWithTrigger = async (email: string, password: string, role: 'consumer' | 'doctor', fullName: string) => {
@@ -621,6 +250,345 @@ export const signUpWithTrigger = async (email: string, password: string, role: '
       error: { 
         message: exception instanceof Error ? exception.message : 'Unknown signup error',
         status: 500
+      } 
+    };
+  }
+};
+
+export const signIn = async (email: string, password: string) => {
+  const client = await getSupabase();
+  return await client.auth.signInWithPassword({
+    email,
+    password,
+  });
+};
+
+export const signOut = async () => {
+  const client = await getSupabase();
+  return await client.auth.signOut();
+};
+
+export const getCurrentUser = async () => {
+  const client = await getSupabase();
+  const { data: { user } } = await client.auth.getUser();
+  
+  if (user?.id) {
+    // Get profile with related doctor data in a single query
+    const { data: profile } = await client
+      .from('profiles')
+      .select(`
+        *,
+        doctor:doctors(*)
+      `)
+      .eq('id', user.id)
+      .single();
+    
+    console.log('Current user profile with doctor data:', profile);
+    
+    return {
+      ...user,
+      role: profile?.role,
+      full_name: profile?.full_name,
+      avatar_url: profile?.avatar_url,
+      location: profile?.location,
+      doctorProfile: profile?.doctor || null,
+      isDoctor: profile?.role === 'doctor',
+      hasDoctorProfile: !!profile?.doctor,
+      doctorData: profile?.doctor?.[0] || null,
+    };
+  }
+  
+  return null;
+};
+
+// =====================================================
+// CLINIC FUNCTIONS  
+// =====================================================
+
+// Insert clinic
+export const insertClinic = async (clinicData: {
+  name: string;
+  address: string;
+  phone?: string;
+  email?: string;
+}) => {
+  try {
+    const client = await getSupabase();
+    const { data, error } = await client
+      .from('clinics')
+      .insert([clinicData])
+      .select()
+      .single();
+    
+    return { data, error };
+  } catch (exception) {
+    console.error('Exception in insertClinic:', exception);
+    return { 
+      data: null, 
+      error: { 
+        message: exception instanceof Error ? exception.message : 'Unknown error',
+        code: 'EXCEPTION'
+      } 
+    };
+  }
+};
+
+// =====================================================
+// AVAILABILITY FUNCTIONS
+// =====================================================
+
+// Insert availability
+export const insertAvailability = async (availabilityData: {
+  doctor_id: string;
+  clinic_id?: string;
+  date: string;
+  is_available?: boolean;
+  max_appointments?: number;
+}) => {
+  try {
+    const client = await getSupabase();
+    
+    const data = {
+      ...availabilityData,
+      is_available: availabilityData.is_available ?? true,
+      max_appointments: availabilityData.max_appointments ?? 1,
+    };
+    
+    const { data: result, error } = await client
+      .from('availabilities')
+      .insert([data])
+      .select()
+      .single();
+    
+    return { data: result, error };
+  } catch (exception) {
+    console.error('Exception in insertAvailability:', exception);
+    return { 
+      data: null, 
+      error: { 
+        message: exception instanceof Error ? exception.message : 'Unknown error',
+        code: 'EXCEPTION'
+      } 
+    };
+  }
+};
+
+// Alias for insertAvailability (better naming)
+export const createAvailability = insertAvailability;
+
+// =====================================================
+// APPOINTMENT FUNCTIONS (for Redux slices)
+// =====================================================
+
+export const createAppointment = async (appointment: {
+  doctor_id: string;
+  user_id: string;
+  clinic_id?: string;
+  date: string;
+  status: string;
+  notes?: string;
+}) => {
+  const client = await getSupabase();
+  const { data, error } = await client
+    .from('appointments')
+    .insert([appointment])
+    .select()
+    .single();
+  
+  return { data, error };
+};
+
+export const getUserAppointments = async (userId: string) => {
+  try {
+    const client = await getSupabase();
+    
+    console.log('Fetching appointments for user:', userId);
+    
+    const { data, error } = await client
+      .from('appointments')
+      .select(`
+        *,
+        doctor:doctors(
+          id,
+          full_name,
+          bio,
+          specialty_id,
+          photo_url,
+          fee
+        ),
+        clinic:clinics(
+          id,
+          name,
+          address,
+          phone
+        )
+      `)
+      .eq('user_id', userId) // Fixed: use patient_id instead of user_id
+      .order('date', { ascending: true })
+    
+    if (error) {
+      console.error('Error fetching user appointments:', error);
+      return { data: null, error };
+    }
+    
+    console.log('Fetched appointments:', data?.length || 0, 'appointments');
+    console.log('Sample appointment:', data?.[0] ? JSON.stringify(data[0], null, 2) : 'No appointments');
+    
+    // Transform the data to match expected format
+    const transformedAppointments = data?.map((appointment: any) => ({
+      id: appointment.id,
+      doctor_id: appointment.doctor_id,
+      patient_id: appointment.patient_id,
+      clinic_id: appointment.clinic_id,
+      date: appointment.date,
+      status: appointment.status,
+      appointment_type: appointment.appointment_type,
+      fee_charged: appointment.fee_charged,
+      symptoms: appointment.symptoms,
+      notes: appointment.notes,
+      doctor: appointment.doctor ? {
+        id: appointment.doctor.id,
+        name: appointment.doctor.full_name,
+        specialty: appointment.doctor.specialty,
+        photo_url: appointment.doctor.photo_url,
+        fee: appointment.doctor.fee
+      } : null,
+      clinic: appointment.clinic ? {
+        id: appointment.clinic.id,
+        name: appointment.clinic.name,
+        address: appointment.clinic.address,
+        phone: appointment.clinic.phone
+      } : null,
+      created_at: appointment.created_at,
+      updated_at: appointment.updated_at
+    })) || [];
+    
+    return { data: transformedAppointments, error: null };
+  } catch (exception) {
+    console.error('Exception fetching user appointments:', exception);
+    return { 
+      data: null, 
+      error: { 
+        message: exception instanceof Error ? exception.message : 'Unknown error',
+        code: 'EXCEPTION'
+      } 
+    };
+  }
+};
+
+// Get appointments based on user role
+export const getAppointmentsByRole = async (
+  userId: string, 
+  userRole: 'consumer' | 'doctor', 
+  doctorId?: string
+) => {
+  try {
+    const client = await getSupabase();
+        
+    if (userRole === 'consumer') {
+      // For consumers, get appointments where they are the patient
+      return await getUserAppointments(userId);
+    } else if (userRole === 'doctor') {
+      // For doctors, use the provided doctorId or fetch from database as fallback
+      let finalDoctorId = doctorId;
+      
+      if (!finalDoctorId) {
+        const { data: doctorData, error: doctorError } = await client
+          .from('doctors')
+          .select('id')
+          .eq('user_id', userId)
+          .single();
+        
+        if (doctorError || !doctorData) {
+          console.error('Error fetching doctor profile:', doctorError);
+          return { data: [], error: null }; // Return empty array if doctor profile not found
+        }
+        
+        finalDoctorId = doctorData.id;
+      }
+      
+      // Get appointments where this doctor is assigned
+      const { data, error } = await client
+        .from('appointments')
+        .select(`
+          *,
+          clinic:clinics(
+            id,
+            name,
+            address,
+            phone
+          )
+        `)
+        .eq('doctor_id', finalDoctorId)
+        .order('date', { ascending: true });
+      
+      if (error) {
+        console.error('Error fetching doctor appointments:', error);
+        return { data: null, error };
+      }
+      
+      
+      // Get unique user IDs from appointments
+      const userIds = [...new Set(data?.map((appointment: any) => appointment.user_id).filter(Boolean))];
+      
+      // Fetch all patient profiles in one query
+      let patientsMap = new Map();
+      if (userIds.length > 0) {
+        const { data: patientsData, error: patientsError } = await client
+          .from('profiles')
+          .select('id, full_name, avatar_url')
+          .in('id', userIds);
+        
+        if (patientsError) {
+          console.error('Error fetching patients data:', patientsError);
+        } else {
+          // Create a map for quick lookup
+          patientsData?.forEach((patient: any) => {
+            patientsMap.set(patient.id, {
+              id: patient.id,
+              name: patient.full_name,
+              photo_url: patient.avatar_url
+            });
+          });
+          console.log('Fetched patients data:', patientsMap.size, 'patients');
+        }
+      }
+      
+      // Transform the data for doctor view (patient data already included from join)
+      const transformedAppointments = data?.map((appointment: any) => ({
+        id: appointment.id,
+        doctor_id: appointment.doctor_id,
+        patient_id: appointment.patient_id,
+        clinic_id: appointment.clinic_id,
+        date: appointment.date,
+        status: appointment.status,
+        appointment_type: appointment.appointment_type,
+        fee_charged: appointment.fee_charged,
+        symptoms: appointment.symptoms,
+        notes: appointment.notes,
+        user: patientsMap.get(appointment.user_id) || null,
+        clinic: appointment.clinic ? {
+          id: appointment.clinic.id,
+          name: appointment.clinic.name,
+          address: appointment.clinic.address,
+          phone: appointment.clinic.phone
+        } : null,
+        created_at: appointment.created_at,
+        updated_at: appointment.updated_at
+      })) || [];
+      
+      
+      return { data: transformedAppointments, error: null };
+    }
+    
+    return { data: [], error: null };
+  } catch (exception) {
+    console.error('Exception fetching role-based appointments:', exception);
+    return { 
+      data: null, 
+      error: { 
+        message: exception instanceof Error ? exception.message : 'Unknown error',
+        code: 'EXCEPTION'
       } 
     };
   }

@@ -10,7 +10,7 @@ export interface User {
 export interface Doctor {
   id: string;
   name: string;
-  specialty: string;
+  specialty_id: string;
   experience_years: number;
   rating: number;
   fee: number;
@@ -25,6 +25,8 @@ export interface Clinic {
   id: string;
   name: string;
   address: string;
+  phone?: string;
+  email?: string;
   location: {
     latitude: number;
     longitude: number;
@@ -39,21 +41,39 @@ export interface AvailableSlot {
 export interface TimeSlot {
   id: string;
   time: string;
-  isAvailable: boolean;
+  available: boolean;
   clinic_id: string;
 }
 
 export interface Appointment {
+  user: any;
+  slot: any;
   id: string;
   doctor_id: string;
-  user_id: string;
-  clinic: Clinic;
+  patient_id: string;
+  clinic_id: string;
+  availability_id?: string;
   date: string;
-  slot: TimeSlot;
-  status: 'pending' | 'confirmed' | 'completed' | 'cancelled';
+  status: 'pending' | 'scheduled' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled';
+  appointment_type?: string;
+  fee_charged?: number;
+  symptoms?: string;
+  notes?: string;
   created_at: string;
-  doctor?: Doctor;
-  user?: User;
+  updated_at: string;
+  doctor?: {
+    id: string;
+    name: string;
+    specialty: string;
+    photo_url: string;
+    fee: number;
+  };
+  clinic?: {
+    id: string;
+    name: string;
+    address: string;
+    phone?: string;
+  };
 }
 
 export interface Profile {
@@ -70,8 +90,11 @@ export interface Profile {
 export interface AuthState {
   user: User | null;
   session: any | null;
+  doctorData: any | null; // Store doctor profile data for doctors
   loading: boolean;
   error: string | null;
+  isDoctorOnboardingComplete: boolean;
+  doctorOnboarded: boolean;
 }
 
 export interface DoctorState {
@@ -96,7 +119,21 @@ export interface AppointmentState {
 }
 
 export interface AvailabilityState {
-  doctorAvailability: AvailableSlot[];
+  availability: Record<string, AvailableSlot>;
   loading: boolean;
   error: string | null;
+}
+
+export interface Specialty {
+  id: string;
+  name: string;
+  description?: string;
+  created_at: string;
+}
+
+export interface SpecialtyState {
+  specialties: Specialty[];
+  loading: boolean;
+  error: string | null;
+  selectedSpecialtyId: string | null;
 }

@@ -8,11 +8,10 @@ import {
 } from 'react-native';
 import { Colors, Spacing, Typography } from '../constants/theme';
 import { loadUser } from '../redux/authSlice.supabase';
-import { useAppDispatch, useAppSelector } from '../redux/hooks';
+import { useAppDispatch } from '../redux/hooks';
 
 export const SplashScreen: React.FC = () => {
   const dispatch = useAppDispatch();
-  const { loading } = useAppSelector((state) => state.auth);
 
   useEffect(() => {
     dispatch(loadUser());

@@ -2,7 +2,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import React, { useState } from 'react';
 import {
-  Image,
   ScrollView,
   StyleSheet,
   Text,
@@ -10,22 +9,24 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { Avatar } from '../components/Avatar';
 import { Button } from '../components/Button';
 import { CustomModal } from '../components/CustomModal';
 import { BorderRadius, Colors, Shadow, Spacing, Typography } from '../constants/theme';
 import { useModal } from '../hooks/useModal';
 import { signOutUser } from '../redux/authSlice.supabase';
 import { useAppDispatch, useAppSelector } from '../redux/hooks';
-
 export const ProfileScreen: React.FC = () => {
-  const navigation = useNavigation();
   const dispatch = useAppDispatch();
-  const { user } = useAppSelector((state) => state.auth);
+  const navigation = useNavigation();
+  const { user, loading } = useAppSelector((state) => state.auth);
   const { modalState, showConfirm, showSuccess, hideModal } = useModal();
   
   const [isEditing, setIsEditing] = useState(false);
   const [editedName, setEditedName] = useState(user?.full_name || '');
   const [editedLocation, setEditedLocation] = useState(user?.location || '');
+
+  const isDoctor = user?.role === 'doctor';
 
   const handleLogout = () => {
     showConfirm(
@@ -43,12 +44,33 @@ export const ProfileScreen: React.FC = () => {
     showSuccess('Success', 'Profile updated successfully');
   };
 
-  const profileMenuItems = [
+  // Doctor-specific menu items
+  const doctorMenuItems = [
+    {
+      icon: 'person-outline',
+      title: 'Manage Profile',
+      subtitle: 'Update professional details and clinics',
+      onPress: () => navigation.navigate('DoctorProfileManagement' as never),
+    },
+    {
+      icon: 'time-outline',
+      title: 'Availability Settings',
+      subtitle: 'Manage your appointment schedules',
+      onPress: () => navigation.navigate('DoctorAvailability' as never),
+    },
+  ];
+
+  // Consumer menu items
+  const consumerMenuItems = [
     {
       icon: 'person-outline',
       title: 'Edit Profile',
       onPress: () => setIsEditing(true),
     },
+  ];
+
+  // Common menu items
+  const commonMenuItems = [
     {
       icon: 'notifications-outline',
       title: 'Notifications',
@@ -62,25 +84,32 @@ export const ProfileScreen: React.FC = () => {
     {
       icon: 'help-circle-outline',
       title: 'Help & Support',
-      onPress: () => {},
+      onPress: () => navigation.navigate('HelpSupport' as never),
     },
     {
       icon: 'document-text-outline',
       title: 'Terms & Conditions',
-      onPress: () => {},
+      onPress: () => navigation.navigate('Terms' as never),
     },
     {
       icon: 'shield-checkmark-outline',
       title: 'Privacy Policy',
-      onPress: () => {},
+      onPress: () => navigation.navigate('PrivacyPolicy' as never),
     },
   ];
 
-  const renderMenuItem = (item: typeof profileMenuItems[0]) => (
+  const allMenuItems = isDoctor ? [...doctorMenuItems, ...commonMenuItems] : [...consumerMenuItems, ...commonMenuItems];
+
+  const renderMenuItem = (item: any) => (
     <TouchableOpacity key={item.title} style={styles.menuItem} onPress={item.onPress}>
       <View style={styles.menuItemLeft}>
         <Ionicons name={item.icon as any} size={24} color={Colors.primary} />
-        <Text style={styles.menuItemText}>{item.title}</Text>
+        <View style={styles.menuItemTextContainer}>
+          <Text style={styles.menuItemText}>{item.title}</Text>
+          {item.subtitle && (
+            <Text style={styles.menuItemSubtitle}>{item.subtitle}</Text>
+          )}
+        </View>
       </View>
       <Ionicons name="chevron-forward" size={20} color={Colors.darkGray} />
     </TouchableOpacity>
@@ -99,15 +128,12 @@ export const ProfileScreen: React.FC = () => {
 
         <View style={styles.editContainer}>
           <View style={styles.avatarContainer}>
-            <Image
-              source={{
-                uri: user?.avatar_url || 'https://via.placeholder.com/120',
-              }}
-              style={styles.avatar}
+            <Avatar
+              name={user?.full_name}
+              role={user?.role}
+              size={120}
+              editable={true}
             />
-            <TouchableOpacity style={styles.editAvatarButton}>
-              <Ionicons name="camera" size={20} color={Colors.white} />
-            </TouchableOpacity>
           </View>
 
           <View style={styles.inputContainer}>
@@ -169,11 +195,10 @@ export const ProfileScreen: React.FC = () => {
       <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       {/* Profile Header */}
       <View style={styles.profileHeader}>
-        <Image
-          source={{
-            uri: user?.avatar_url || 'https://via.placeholder.com/120',
-          }}
-          style={styles.profileAvatar}
+        <Avatar
+          name={user?.full_name}
+          role={user?.role}
+          size={120}
         />
         <Text style={styles.profileName}>{user?.full_name || 'User'}</Text>
         <Text style={styles.profileEmail}>{user?.email}</Text>
@@ -204,7 +229,7 @@ export const ProfileScreen: React.FC = () => {
 
       {/* Menu Items */}
       <View style={styles.menuContainer}>
-        {profileMenuItems.map(renderMenuItem)}
+        {allMenuItems.map(renderMenuItem)}
       </View>
 
       {/* Logout Button */}
@@ -213,6 +238,8 @@ export const ProfileScreen: React.FC = () => {
           title="Logout"
           onPress={handleLogout}
           variant="outline"
+          loading={loading}
+          loadingText="Logging out..."
           style={styles.logoutButton}
         />
       </View>
@@ -256,17 +283,12 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.xxl,
     ...Shadow.sm,
   },
-  profileAvatar: {
-    width: 120,
-    height: 120,
-    borderRadius: BorderRadius.full,
-    marginBottom: Spacing.md,
-  },
   profileName: {
     fontSize: Typography.sizes.xl,
     fontWeight: Typography.weights.bold,
     color: Colors.text.primary,
     marginBottom: Spacing.xs,
+    marginTop: Spacing.md,
   },
   profileEmail: {
     fontSize: Typography.sizes.md,
@@ -327,11 +349,20 @@ const styles = StyleSheet.create({
   menuItemLeft: {
     flexDirection: 'row',
     alignItems: 'center',
+    flex: 1,
+  },
+  menuItemTextContainer: {
+    marginLeft: Spacing.md,
+    flex: 1,
   },
   menuItemText: {
     fontSize: Typography.sizes.md,
     color: Colors.text.primary,
-    marginLeft: Spacing.md,
+  },
+  menuItemSubtitle: {
+    fontSize: Typography.sizes.sm,
+    color: Colors.darkGray,
+    marginTop: 2,
   },
   logoutContainer: {
     padding: Spacing.lg,
@@ -346,22 +377,6 @@ const styles = StyleSheet.create({
   avatarContainer: {
     alignItems: 'center',
     marginBottom: Spacing.xl,
-  },
-  avatar: {
-    width: 120,
-    height: 120,
-    borderRadius: BorderRadius.full,
-  },
-  editAvatarButton: {
-    position: 'absolute',
-    bottom: 0,
-    right: '35%',
-    width: 36,
-    height: 36,
-    borderRadius: BorderRadius.full,
-    backgroundColor: Colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   inputContainer: {
     marginBottom: Spacing.lg,

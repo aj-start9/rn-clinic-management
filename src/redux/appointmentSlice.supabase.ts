@@ -1,6 +1,8 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
-import { createAppointment, getDoctorAppointments, getUserAppointments } from '../services/supabase';
+import { getDoctorAppointments } from '../services/doctorService';
+import { createAppointment, getAppointmentsByRole, getUserAppointments } from '../services/supabase';
 import { AppointmentState } from '../types';
+import { resetAllState } from './authSlice.supabase';
 
 const initialState: AppointmentState = {
   appointments: [],
@@ -16,14 +18,13 @@ export const bookAppointment = createAsyncThunk(
   async (appointmentData: {
     doctor_id: string;
     user_id: string;
-    clinic: any;
+    clinic_id: string;
     date: string;
-    slot: any;
+    slot_id: any;
     status: string;
   }, { rejectWithValue }) => {
     try {
-      const { data, error } = await createAppointment(appointmentData);
-      
+      const { data, error } = await createAppointment(appointmentData as any);
       if (error) {
         throw new Error(error.message);
       }
@@ -47,6 +48,44 @@ export const fetchUserAppointments = createAsyncThunk(
       
       return data || [];
     } catch (error: any) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+// New role-based appointment fetching
+export const fetchAppointmentsByRole = createAsyncThunk(
+  'appointments/fetchAppointmentsByRole',
+  async (
+    { userId, userRole, doctorId }: { 
+      userId: string; 
+      userRole: 'consumer' | 'doctor'; 
+      doctorId?: string;
+    }, 
+    { rejectWithValue, getState }
+  ) => {
+    try {      
+      // For doctors, try to get doctorId from Redux state if not provided
+      let finalDoctorId = doctorId;
+      if (userRole === 'doctor' && !finalDoctorId) {
+        const state = getState() as any;
+        const doctorData = state.auth?.doctorData;
+        if (doctorData?.doctor?.id) {
+          finalDoctorId = doctorData.doctor.id;
+          console.log('Using doctor ID from Redux state:', finalDoctorId);
+        }
+      }
+      console.log('Fetching appointments by role:', { userId, userRole, doctorId: finalDoctorId });
+      const { data, error } = await getAppointmentsByRole(userId, userRole, finalDoctorId);
+      
+      if (error) {
+        throw new Error(error.message);
+      }
+      
+      console.log('Fetched appointments by role:', data || 0);
+      return data || [];
+    } catch (error: any) {
+      console.error('Error in fetchAppointmentsByRole:', error);
       return rejectWithValue(error.message);
     }
   }
@@ -130,6 +169,21 @@ const appointmentSlice = createSlice({
         state.error = action.payload as string;
       })
       
+      // Fetch Appointments by Role (new)
+      .addCase(fetchAppointmentsByRole.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchAppointmentsByRole.fulfilled, (state, action) => {
+        state.loading = false;
+        state.appointments = action.payload;
+        state.error = null;
+      })
+      .addCase(fetchAppointmentsByRole.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+      
       // Fetch Doctor Appointments
       .addCase(fetchDoctorAppointments.pending, (state) => {
         state.loading = true;
@@ -143,6 +197,11 @@ const appointmentSlice = createSlice({
       .addCase(fetchDoctorAppointments.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
+      })
+      
+      // Reset all state on logout
+      .addCase(resetAllState, (state) => {
+        return initialState;
       });
   },
 });

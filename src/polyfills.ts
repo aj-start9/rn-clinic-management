@@ -6,6 +6,13 @@ try {
   console.warn('Failed to load react-native-url-polyfill:', error);
 }
 
+// Import core-js polyfills for modern JavaScript features
+try {
+  require('core-js/actual/structured-clone');
+} catch (error) {
+  console.warn('core-js/structured-clone not available, using custom polyfill');
+}
+
 // Wait for runtime to be ready before setting up polyfills
 const waitForRuntime = () => {
   return new Promise<void>((resolve) => {
@@ -42,6 +49,36 @@ const setupURLPolyfill = async () => {
 
 // Initialize URL polyfill
 setupURLPolyfill();
+
+// structuredClone polyfill for React Native
+if (typeof global.structuredClone === 'undefined') {
+  global.structuredClone = function(obj: any) {
+    // Enhanced deep clone implementation with better type handling
+    if (obj === null || typeof obj !== 'object') return obj;
+    if (obj instanceof Date) return new Date(obj.getTime());
+    if (obj instanceof RegExp) return new RegExp(obj);
+    if (obj instanceof Array) return obj.map(item => global.structuredClone(item));
+    if (obj instanceof Set) return new Set([...obj].map(item => global.structuredClone(item)));
+    if (obj instanceof Map) {
+      const clonedMap = new Map();
+      for (const [key, value] of obj.entries()) {
+        clonedMap.set(global.structuredClone(key), global.structuredClone(value));
+      }
+      return clonedMap;
+    }
+    if (typeof obj === 'object') {
+      const cloned: any = {};
+      for (const key in obj) {
+        if (obj.hasOwnProperty(key)) {
+          cloned[key] = global.structuredClone(obj[key]);
+        }
+      }
+      return cloned;
+    }
+    return obj;
+  };
+  console.log('✅ structuredClone polyfill added');
+}
 
 // Global polyfills
 if (typeof global === 'undefined') {
