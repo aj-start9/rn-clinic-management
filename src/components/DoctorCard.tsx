@@ -7,6 +7,7 @@ import {
   View,
 } from 'react-native';
 import { BorderRadius, Colors, Shadow, Spacing, Typography } from '../constants/theme';
+import { useAppSelector } from '../redux/hooks';
 import { Doctor } from '../types';
 import { Avatar } from './Avatar';
 
@@ -16,6 +17,7 @@ interface DoctorCardProps {
 }
 
 export const DoctorCard: React.FC<DoctorCardProps> = ({ doctor, onPress }) => {
+  const specialties = useAppSelector((state: any) => state.specialties.specialties);
   const renderStars = (rating: number) => {
     const stars = [];
     const fullStars = Math.floor(rating);
@@ -43,6 +45,10 @@ export const DoctorCard: React.FC<DoctorCardProps> = ({ doctor, onPress }) => {
     return stars;
   };
 
+  const getSpecialtyName = (specialtyId: string) => {
+    return specialties.filter((spec: any) => spec.id === specialtyId)[0]?.name;
+  }
+
   return (
     <TouchableOpacity style={styles.container} onPress={onPress} activeOpacity={0.8}>
       <View style={styles.header}>
@@ -53,7 +59,7 @@ export const DoctorCard: React.FC<DoctorCardProps> = ({ doctor, onPress }) => {
         />
         <View style={styles.info}>
           <Text style={styles.name}>{doctor.name || 'Unknown Doctor'}</Text>
-          <Text style={styles.specialty}>{doctor.specialty_id || 'General Practice'}</Text>
+          <Text style={styles.specialty}>{getSpecialtyName(doctor.specialty_id)}</Text>
           <View style={styles.ratingContainer}>
             <View style={styles.stars}>
               {renderStars(doctor.rating)}
@@ -91,6 +97,7 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.lg,
     padding: Spacing.md,
     marginBottom: Spacing.md,
+    marginTop: Spacing.sm,
     ...Shadow.md,
   },
   header: {

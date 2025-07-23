@@ -1,7 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -16,17 +17,34 @@ import { BorderRadius, Colors, Shadow, Spacing, Typography } from '../constants/
 import { useModal } from '../hooks/useModal';
 import { signOutUser } from '../redux/authSlice.supabase';
 import { useAppDispatch, useAppSelector } from '../redux/hooks';
+import { fetchUserStats } from '../redux/userStatsSlice';
 export const ProfileScreen: React.FC = () => {
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
   const { user, loading } = useAppSelector((state) => state.auth);
+  const { stats, recentAppointments, loading: statsLoading, error: statsError } = useAppSelector((state) => state.userStats);
   const { modalState, showConfirm, showSuccess, hideModal } = useModal();
   
   const [isEditing, setIsEditing] = useState(false);
   const [editedName, setEditedName] = useState(user?.full_name || '');
   const [editedLocation, setEditedLocation] = useState(user?.location || '');
+  const [refreshing, setRefreshing] = useState(false);
 
   const isDoctor = user?.role === 'doctor';
+
+  // Fetch user stats on component mount
+  useEffect(() => {
+    if (user?.id && user?.role) {
+      dispatch(fetchUserStats({ 
+        userId: user.id, 
+        userRole: user.role as 'consumer' | 'doctor' 
+      }));
+    }
+  }, [dispatch, user?.id, user?.role]);
+
+  const handleRefresh = async () => {
+   
+  };
 
   const handleLogout = () => {
     showConfirm(
@@ -192,7 +210,18 @@ export const ProfileScreen: React.FC = () => {
 
   return (
     <>
-      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        style={styles.container} 
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            colors={[Colors.primary]}
+            tintColor={Colors.primary}
+          />
+        }
+      >
       {/* Profile Header */}
       <View style={styles.profileHeader}>
         <Avatar
@@ -209,23 +238,130 @@ export const ProfileScreen: React.FC = () => {
         </View>
       </View>
 
-      {/* Profile Stats */}
-      <View style={styles.statsContainer}>
-        <View style={styles.statItem}>
-          <Text style={styles.statNumber}>12</Text>
-          <Text style={styles.statLabel}>Appointments</Text>
+      {/* Profile Stats - 6 stats in 2 rows of 3 */}
+      <View style={styles.statsMainContainer}>
+        {/* First Row */}
+        <View style={styles.statsRow}>
+          <View style={styles.statItem}>
+            <Ionicons 
+              name={isDoctor ? "people-outline" : "calendar-outline"} 
+              size={20} 
+              color={Colors.primary} 
+              style={styles.statIcon}
+            />
+            <Text style={styles.statNumber}>
+              {statsLoading ? '...' : (stats?.totalAppointments || 0)}
+            </Text>
+          </View>
+          <View style={styles.statItem}>
+            <Ionicons 
+              name="checkmark-circle-outline" 
+              size={20} 
+              color={Colors.success} 
+              style={styles.statIcon}
+            />
+            <Text style={styles.statNumber}>
+              {statsLoading ? '...' : (stats?.completedAppointments || 0)}
+            </Text>
+          </View>
+          <View style={styles.statItem}>
+            <Ionicons 
+              name="star-outline" 
+              size={20} 
+              color={Colors.warning} 
+              style={styles.statIcon}
+            />
+            <Text style={styles.statNumber}>
+              {statsLoading ? '...' : (stats?.averageRating ? stats.averageRating.toFixed(1) : '0.0')}
+            </Text>
+          </View>
         </View>
-        <View style={styles.statDivider} />
-        <View style={styles.statItem}>
-          <Text style={styles.statNumber}>8</Text>
-          <Text style={styles.statLabel}>Completed</Text>
-        </View>
-        <View style={styles.statDivider} />
-        <View style={styles.statItem}>
-          <Text style={styles.statNumber}>4.9</Text>
-          <Text style={styles.statLabel}>Rating</Text>
+
+        {/* Second Row */}
+        <View style={styles.statsRow}>
+          <View style={styles.statItem}>
+            <Ionicons 
+              name="time-outline" 
+              size={20} 
+              color={Colors.accent} 
+              style={styles.statIcon}
+            />
+            <Text style={styles.statNumber}>
+              {statsLoading ? '...' : (stats?.pendingAppointments || 0)}
+            </Text>
+          </View>
+          <View style={styles.statItem}>
+            <Ionicons 
+              name="chatbubbles-outline" 
+              size={20} 
+              color={Colors.primary} 
+              style={styles.statIcon}
+            />
+            <Text style={styles.statNumber}>
+              {statsLoading ? '...' : (stats?.totalRatings || 0)}
+            </Text>
+          </View>
+          <View style={styles.statItem}>
+            <Ionicons 
+              name={isDoctor ? "cash-outline" : "wallet-outline"} 
+              size={20} 
+              color={Colors.success} 
+              style={styles.statIcon}
+            />
+            <Text style={styles.statNumber}>
+              ${statsLoading ? '...' : (isDoctor ? (stats?.totalEarned || 0) : (stats?.totalSpent || 0))}
+            </Text>
+          </View>
         </View>
       </View>
+
+      {/* Recent Activity Section */}
+      {recentAppointments && recentAppointments.length > 0 && (
+        <View style={styles.recentActivityContainer}>
+          <Text style={styles.sectionTitle}>Recent Appointments</Text>
+          {recentAppointments.slice(0, 3).map((appointment, index) => (
+            <View key={appointment.id} style={styles.recentAppointmentItem}>
+              <View style={styles.appointmentIcon}>
+                <Ionicons 
+                  name="calendar-outline" 
+                  size={16} 
+                  color={Colors.primary} 
+                />
+              </View>
+              <View style={styles.appointmentDetails}>
+                <Text style={styles.appointmentTitle}>
+                  {isDoctor 
+                    ? appointment.users?.full_name || 'Patient' 
+                    : appointment.doctors?.name || 'Doctor'
+                  }
+                </Text>
+                <Text style={styles.appointmentDate}>
+                  {new Date(appointment.appointment_date).toLocaleDateString()} at {appointment.time_slot}
+                </Text>
+              </View>
+              <View style={[styles.statusBadge, { 
+                backgroundColor: appointment.status === 'completed' ? Colors.success : 
+                                appointment.status === 'cancelled' ? Colors.error : Colors.warning 
+              }]}>
+                <Text style={styles.statusText}>
+                  {appointment.status}
+                </Text>
+              </View>
+            </View>
+          ))}
+        </View>
+      )}
+
+      {/* Error State */}
+      {statsError && (
+        <View style={styles.errorContainer}>
+          <Ionicons name="alert-circle-outline" size={24} color={Colors.error} />
+          <Text style={styles.errorText}>Failed to load profile data</Text>
+          <TouchableOpacity onPress={handleRefresh} style={styles.retryButton}>
+            <Text style={styles.retryText}>Retry</Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       {/* Menu Items */}
       <View style={styles.menuContainer}>
@@ -315,8 +451,32 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     ...Shadow.sm,
   },
-  statItem: {
+  statsMainContainer: {
+    backgroundColor: Colors.white,
+    marginHorizontal: Spacing.md,
+    marginTop: Spacing.md,
+  },
+  statsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
     alignItems: 'center',
+    paddingVertical: Spacing.md,
+  },
+  statItem: {
+    flex: 1,
+    backgroundColor: Colors.white,
+    padding: 15,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginHorizontal: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  statIcon: {
+    marginBottom: 8,
   },
   statNumber: {
     fontSize: Typography.sizes.xl,
@@ -400,5 +560,116 @@ const styles = StyleSheet.create({
   },
   saveButton: {
     marginTop: Spacing.lg,
+  },
+  // Additional stats styles
+  additionalStatsContainer: {
+    backgroundColor: Colors.white,
+    margin: Spacing.md,
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.lg,
+    paddingBottom: 0,
+    ...Shadow.sm,
+  },
+  additionalStatRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: Spacing.md,
+    width: '100%',
+  },
+  additionalStatItem: {
+    flex: 1,
+    alignItems: 'center',
+    paddingHorizontal: Spacing.sm,
+  },
+  additionalStatLabel: {
+    fontSize: Typography.sizes.xs,
+    color: Colors.darkGray,
+    marginTop: Spacing.xs,
+    textAlign: 'center',
+  },
+  additionalStatValue: {
+    fontSize: Typography.sizes.md,
+    fontWeight: Typography.weights.semibold,
+    color: Colors.text.primary,
+    marginTop: 2,
+  },
+  // Recent activity styles
+  recentActivityContainer: {
+    backgroundColor: Colors.white,
+    margin: Spacing.md,
+    borderRadius: BorderRadius.lg,
+    ...Shadow.sm,
+  },
+  sectionTitle: {
+    fontSize: Typography.sizes.lg,
+    fontWeight: Typography.weights.bold,
+    color: Colors.text.primary,
+    marginBottom: Spacing.md,
+  },
+  recentAppointmentItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: Spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.lightGray,
+  },
+  appointmentIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: Colors.secondary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: Spacing.md,
+  },
+  appointmentDetails: {
+    flex: 1,
+  },
+  appointmentTitle: {
+    fontSize: Typography.sizes.md,
+    fontWeight: Typography.weights.medium,
+    color: Colors.text.primary,
+  },
+  appointmentDate: {
+    fontSize: Typography.sizes.sm,
+    color: Colors.darkGray,
+    marginTop: 2,
+  },
+  statusBadge: {
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 4,
+    borderRadius: BorderRadius.sm,
+  },
+  statusText: {
+    fontSize: Typography.sizes.xs,
+    color: Colors.white,
+    fontWeight: Typography.weights.medium,
+    textTransform: 'capitalize',
+  },
+  // Error state styles
+  errorContainer: {
+    alignItems: 'center',
+    padding: Spacing.xl,
+    margin: Spacing.md,
+    backgroundColor: Colors.white,
+    borderRadius: BorderRadius.lg,
+    ...Shadow.sm,
+  },
+  errorText: {
+    fontSize: Typography.sizes.md,
+    color: Colors.error,
+    marginVertical: Spacing.md,
+    textAlign: 'center',
+  },
+  retryButton: {
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.sm,
+    backgroundColor: Colors.primary,
+    borderRadius: BorderRadius.md,
+  },
+  retryText: {
+    color: Colors.white,
+    fontSize: Typography.sizes.sm,
+    fontWeight: Typography.weights.medium,
   },
 });

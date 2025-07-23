@@ -27,19 +27,18 @@ export const DoctorListScreen: React.FC = () => {
   const navigation = useNavigation();
   const route = useRoute<DoctorListRouteProp>();
   const dispatch = useAppDispatch();
-  
   const { doctors, loading, searchQuery, filters } = useAppSelector((state) => state.doctors);
   const { specialties } = useAppSelector((state) => state.specialties);
   const [showFilters, setShowFilters] = useState(false);
   const [tempFilters, setTempFilters] = useState(filters);
-
+  console.log('DoctorListScreen - filters:', filters);
   useEffect(() => {
     dispatch(fetchDoctors());
     dispatch(fetchSpecialties());
     
     // Set initial specialty filter if passed from navigation
     if (route.params?.specialty) {
-      dispatch(setFilters({ specialty: route.params.specialty }));
+      dispatch(setFilters({ specialty_id: route.params.specialty }));
     }
 
     // Cleanup function - runs when component unmounts
@@ -54,10 +53,10 @@ export const DoctorListScreen: React.FC = () => {
       (doctor.specialty_id.toLowerCase() === (searchQuery.toLowerCase()));
 
     // More flexible specialty matching - check if doctor specialty contains the filter or vice versa
-    const matchesSpecialty = !filters.specialty ||
-      doctor.specialty_id === filters.specialty ||
-      doctor.specialty_id.toLowerCase().includes(filters.specialty.toLowerCase()) ||
-      filters.specialty.toLowerCase().includes(doctor.specialty_id.toLowerCase());
+    const matchesSpecialty = !filters.specialty_id ||
+      doctor.specialty_id === filters.specialty_id ||
+      doctor.specialty_id.toLowerCase().includes(filters.specialty_id.toLowerCase()) ||
+      filters.specialty_id.toLowerCase().includes(doctor.specialty_id.toLowerCase());
     const matchesRating = !filters.rating || doctor.rating >= filters.rating;
     const matchesExperience = !filters.experience || doctor.experience_years >= filters.experience;
 
@@ -74,7 +73,7 @@ export const DoctorListScreen: React.FC = () => {
   };
 
   const handleClearFilters = () => {
-    const clearedFilters = { specialty: '', rating: 0, experience: 0 };
+    const clearedFilters = { specialty_id: '', rating: 0, experience: 0 };
     setTempFilters(clearedFilters);
     dispatch(clearFilters());
     setShowFilters(false);
@@ -110,19 +109,19 @@ export const DoctorListScreen: React.FC = () => {
                 key={specialtyObj.id}
                 style={[
                   styles.specialtyChip,
-                  tempFilters.specialty === specialtyObj.name && styles.specialtyChipSelected,
+                  tempFilters.specialty_id === specialtyObj.id && styles.specialtyChipSelected,
                 ]}
                 onPress={() =>
                   setTempFilters(prev => ({
                     ...prev,
-                    specialty: prev.specialty === specialtyObj.name ? '' : specialtyObj.name,
+                    specialty_id: prev.specialty_id === specialtyObj.id ? '' : specialtyObj.id,
                   }))
                 }
               >
                 <Text
                   style={[
                     styles.specialtyChipText,
-                    tempFilters.specialty === specialtyObj.name && styles.specialtyChipTextSelected,
+                    tempFilters.specialty_id === specialtyObj.id && styles.specialtyChipTextSelected,
                   ]}
                 >
                   {specialtyObj.name}

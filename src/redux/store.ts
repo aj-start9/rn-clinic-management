@@ -3,6 +3,7 @@ import appointmentReducer from './appointmentSlice.supabase';
 import authReducer from './authSlice.supabase';
 import doctorReducer from './doctorSlice.supabase';
 import specialtyReducer from './specialtySlice';
+import userStatsReducer from './userStatsSlice';
 
 export const store = configureStore({
   reducer: {
@@ -10,6 +11,7 @@ export const store = configureStore({
     doctors: doctorReducer,
     appointments: appointmentReducer,
     specialties: specialtyReducer,
+    userStats: userStatsReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

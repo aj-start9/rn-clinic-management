@@ -10,7 +10,7 @@ const initialState: DoctorState = {
   error: null,
   searchQuery: '',
   filters: {
-    specialty: '',
+    specialty_id: '',
     rating: 0,
     experience: 0,
   },
@@ -81,13 +81,13 @@ const doctorSlice = createSlice({
     },
     clearFilters: (state) => {
       state.filters = {
-        specialty: '',
+        specialty_id: '',
         rating: 0,
         experience: 0,
       };
     },
     setSelectedSpecialty: (state, action) => {
-      state.filters.specialty = action.payload;
+      state.filters.specialty_id = action.payload;
     },
     clearSelectedDoctor: (state) => {
       state.selectedDoctor = null;

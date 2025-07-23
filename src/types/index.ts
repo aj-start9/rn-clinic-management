@@ -104,7 +104,7 @@ export interface DoctorState {
   error: string | null;
   searchQuery: string;
   filters: {
-    specialty: string;
+    specialty_id: string;
     rating: number;
     experience: number;
   };

@@ -423,7 +423,7 @@ export const getUserAppointments = async (userId: string) => {
           phone
         )
       `)
-      .eq('user_id', userId) // Fixed: use patient_id instead of user_id
+      .eq('user_id', userId)
       .order('date', { ascending: true })
     
     if (error) {

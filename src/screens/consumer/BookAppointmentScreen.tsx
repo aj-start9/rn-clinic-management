@@ -2,10 +2,10 @@ import { Ionicons } from '@expo/vector-icons';
 import { RouteProp, useRoute } from '@react-navigation/native';
 import React from 'react';
 import {
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
+    ScrollView,
+    StyleSheet,
+    Text,
+    View,
 } from 'react-native';
 import { Avatar } from '../../components/Avatar';
 import { Button } from '../../components/Button';
@@ -13,8 +13,8 @@ import { CustomModal } from '../../components/CustomModal';
 import { BorderRadius, Colors, Shadow, Spacing, Typography } from '../../constants/theme';
 import { useModal } from '../../hooks/useModal';
 import { useNavigation } from '../../hooks/useNavigation';
-import { bookAppointment } from '../../redux/appointmentSlice.supabase';
 import { useAppDispatch, useAppSelector } from '../../redux/hooks';
+import { appointmentService } from '../../services/appointmentService';
 import { RootStackParamList } from '../../types/navigation';
 
 type BookAppointmentRouteProp = RouteProp<RootStackParamList, 'BookAppointment'>;
@@ -44,25 +44,59 @@ export const BookAppointmentScreen: React.FC = () => {
     }
 
     try {
-      await dispatch(bookAppointment({
+      // Choose approach based on your needs:
+      
+      // Option 1: Complex booking with immediate confirmation (Edge Function)
+      const result = await appointmentService.createAppointmentWithConfirmation({
         doctor_id: doctor.id,
-        user_id: user.id,
-        clinic_id: clinic.id,
-        date,
-        slot_id: slot.id,
-        status: 'pending',
-      })).unwrap();
+        patient_id: user.id,
+        appointment_date: date,
+        time_slot: slot.time,
+        fee: doctor.fee,
+        appointment_type: 'consultation',
+        notes: `Booked via mobile app at ${clinic.name}`
+      });
 
       showSuccess(
-        'Success',
-        'Your appointment has been booked successfully!',
+        'Appointment Confirmed!',
+        result.message || 'Your appointment has been booked and confirmation sent!',
         () => {
           hideModal();
           navigation.goBack();
         }
       );
+      
     } catch (error: any) {
-      showError('Error', error.message || 'Failed to book appointment');
+      console.error('Edge function booking failed:', error);
+      
+      // Fallback: Simple appointment creation (Triggers handle notifications)
+      try {
+        console.log('Trying fallback: simple appointment creation...');
+        
+        // This uses database triggers for all complex operations
+        const result = await appointmentService.createAppointment({
+          doctor_id: doctor.id,
+          patient_id: user.id,
+          appointment_date: date,
+          time_slot: slot.time,
+          fee: doctor.fee || 100,
+          appointment_type: 'consultation',
+          notes: `Booked via mobile app at ${clinic.name}`
+        });
+
+        showSuccess(
+          'Appointment Booked!',
+          'Your appointment has been successfully booked. You will receive a confirmation shortly.',
+          () => {
+            hideModal();
+            navigation.goBack();
+          }
+        );
+        
+      } catch (fallbackError: any) {
+        console.error('All booking methods failed:', fallbackError);
+        showError('Error', fallbackError.message || 'Failed to book appointment. Please try again.');
+      }
     }
   };
 

@@ -160,7 +160,7 @@ export const ConsumerHomeScreen: React.FC = () => {
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <Text style={[styles.sectionTitle, { marginBottom: Spacing.sm }]}>Popular Specialties</Text>
-          <TouchableOpacity onPress={() => navigation.navigate('Doctors' as any, { specialty: "" })}>
+          <TouchableOpacity onPress={() => navigation.navigate('Doctors' as any, { specialty: null })}>
             <Text style={styles.seeAllText}>See All</Text>
           </TouchableOpacity>
         </View>
@@ -170,7 +170,7 @@ export const ConsumerHomeScreen: React.FC = () => {
           </View>
         ) : specialties.length > 0 ? (
           <FlatList
-            data={specialties.slice(0, 6)}
+            data={specialties}
             renderItem={renderSpecialtyCard}
             keyExtractor={(item) => item.id}
             horizontal
@@ -188,9 +188,6 @@ export const ConsumerHomeScreen: React.FC = () => {
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <Text style={[styles.sectionTitle, { marginBottom: Spacing.sm }]}>Top Rated Doctors</Text>
-          {/* <TouchableOpacity onPress={() => navigation.navigate('Doctors' as never)}>
-            <Text style={styles.seeAllText}>View All ({doctors.length})</Text>
-          </TouchableOpacity> */}
         </View>
         <View style={styles.doctorsContainer}>
           {loading ? (
