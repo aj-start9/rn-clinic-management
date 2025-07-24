@@ -50,12 +50,10 @@ export const BookAppointmentScreen: React.FC = () => {
       // Option 1: Complex booking with immediate confirmation (Edge Function)
       const result = await appointmentService.createAppointmentWithConfirmation({
         doctor_id: doctor.id,
-        patient_id: user.id,
+        user_id: user.id,
         appointment_date: date,
-        time_slot: slot.time,
-        fee: doctor.fee,
-        appointment_type: 'consultation',
-        notes: `Booked via mobile app at ${clinic.name}`
+        slot_id: slot.id,
+        clinic_id: clinic.id,
       });
 
       showSuccess(
@@ -77,12 +75,10 @@ export const BookAppointmentScreen: React.FC = () => {
         // This uses database triggers for all complex operations
         const result = await appointmentService.createAppointment({
           doctor_id: doctor.id,
-          patient_id: user.id,
+          user_id: user.id,
+          clinic_id: clinic.id,
           appointment_date: date,
-          time_slot: slot.time,
-          fee: doctor.fee || 100,
-          appointment_type: 'consultation',
-          notes: `Booked via mobile app at ${clinic.name}`
+          slot_id: slot.id,
         });
 
         showSuccess(

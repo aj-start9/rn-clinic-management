@@ -2,12 +2,10 @@ import { supabase } from './supabase';
 
 export interface AppointmentData {
   doctor_id: string;
-  patient_id: string;
+  user_id: string;
   appointment_date: string;
-  time_slot: string;
-  fee: number;
-  appointment_type?: string;
-  notes?: string;
+  slot_id: string;
+  clinic_id: string;
 }
 
 export interface AppointmentResponse {
@@ -82,22 +80,12 @@ class AppointmentService {
         .from('appointments')
         .insert({
           doctor_id: data.doctor_id,
-          patient_id: data.patient_id,
-          appointment_date: data.appointment_date,
-          time_slot: data.time_slot,
-          fee: data.fee,
+          user_id: data.user_id,
+          clinic_id: data.clinic_id,
+          date: data.appointment_date,
+          slot_id: data.slot_id,
           status: 'confirmed',
-          appointment_type: data.appointment_type || 'consultation',
-          notes: data.notes || null
         })
-        .select(`
-          *,
-          doctors (
-            id,
-            full_name,
-            specialty
-          )
-        `)
         .single();
 
       if (error) {

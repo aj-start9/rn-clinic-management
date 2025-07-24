@@ -40,8 +40,6 @@ serve(async (req: Request) => {
         time_slot: appointmentData.timeSlot,
         fee: appointmentData.fee,
         status: 'confirmed', // Immediate confirmation
-        appointment_type: appointmentData.type || 'consultation',
-        notes: appointmentData.notes || null
       })
       .select(`
         *,
