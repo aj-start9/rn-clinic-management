@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useIsFocused, useNavigation } from '@react-navigation/native';
 import React, { useEffect, useState } from 'react';
 import {
   RefreshControl,
@@ -29,7 +29,7 @@ export const ProfileScreen: React.FC = () => {
   const [editedName, setEditedName] = useState(user?.full_name || '');
   const [editedLocation, setEditedLocation] = useState(user?.location || '');
   const [refreshing, setRefreshing] = useState(false);
-
+ const isFocused = useIsFocused();
   const isDoctor = user?.role === 'doctor';
 
   // Fetch user stats on component mount
@@ -40,7 +40,7 @@ export const ProfileScreen: React.FC = () => {
         userRole: user.role as 'consumer' | 'doctor' 
       }));
     }
-  }, [dispatch, user?.id, user?.role]);
+  }, [dispatch, user?.id, user?.role, isFocused]);
 
   const handleRefresh = async () => {
    

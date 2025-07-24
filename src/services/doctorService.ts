@@ -129,7 +129,7 @@ export const getDoctorDetails = async (doctorId: string) => {
       name: doctorData.full_name,
       specialty_id: doctorData.specialty_id || 'General Practice',
       experience_years: doctorData.experience_years || 0,
-      rating: 4.5, // Default rating
+      rating: doctorData.rating || 0,
       fee: doctorData.fee || 0,
       photo_url: doctorData.photo_url || 'https://via.placeholder.com/120',
       bio: doctorData.bio,

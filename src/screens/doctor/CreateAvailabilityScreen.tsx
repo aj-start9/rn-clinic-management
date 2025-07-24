@@ -1,3 +1,4 @@
+import { useIsFocused } from '@react-navigation/native';
 import React, { useEffect, useState } from 'react';
 import {
   Alert,
@@ -47,7 +48,7 @@ export const CreateAvailabilityScreen: React.FC = () => {
   const [clinics, setClinics] = useState<Clinic[]>([]);
   const [selectedClinic, setSelectedClinic] = useState<Clinic | null>(null);
   const [doctorId, setDoctorId] = useState<string | null>(null);
-
+  const isFocused = useIsFocused();
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([
     {
       id: '1',
@@ -94,7 +95,7 @@ export const CreateAvailabilityScreen: React.FC = () => {
     };
 
     checkOnboardingAndLoadData();
-  }, [user?.id, dispatch, showError]);
+  }, [user?.id, dispatch, showError, isFocused]);
 
   // If onboarding is not complete, show message
   if (!isDoctorOnboardingComplete || !doctorId) {

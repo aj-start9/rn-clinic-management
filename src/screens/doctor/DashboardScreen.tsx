@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useIsFocused, useNavigation } from '@react-navigation/native';
 import React, { useEffect, useState } from 'react';
 import {
   ScrollView,
@@ -21,7 +21,7 @@ export const DoctorDashboardScreen: React.FC = () => {
   const dispatch = useAppDispatch();
   const { user, doctorData } = useAppSelector((state) => state.auth);
   const { appointments, loading } = useAppSelector((state) => state.appointments);
-  
+   const isFocused = useIsFocused();
   // Local state for additional data
   const [clinics, setClinics] = useState<any[]>([]);
   const [dashboardStats, setDashboardStats] = useState<any>(null);
@@ -64,7 +64,7 @@ export const DoctorDashboardScreen: React.FC = () => {
     };
 
     fetchDashboardData();
-  }, [dispatch, user?.id, user?.role, doctorData]);
+  }, [dispatch, user?.id, user?.role, doctorData, isFocused]);
 
   const today = new Date();
   const todayString = today.toISOString().split('T')[0];

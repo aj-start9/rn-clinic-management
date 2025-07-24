@@ -29,7 +29,7 @@ export const DoctorDetailScreen: React.FC = () => {
 
   const { selectedDoctor, loading, error } = useAppSelector((state) => state.doctors);
   const { selectedDate, selectedSlot } = useAppSelector((state) => state.appointments);
-
+  const specialties = useAppSelector((state: any) => state.specialties.specialties);
   const [selectedClinic, setSelectedClinic] = useState<Clinic | null>(null);
   const doctorId = route.params.doctorId;
 
@@ -121,6 +121,10 @@ export const DoctorDetailScreen: React.FC = () => {
     }
   };
 
+ const getSpecialtyName = (specialtyId: string) => {
+    return specialties.filter((spec: any) => spec.id === specialtyId)[0]?.name;
+  }
+
   const availableDates = selectedClinic && selectedDoctor.available_slots || [];
   const slotsForSelectedDate = selectedDate
     ? availableDates.find(slot => slot.date === selectedDate)?.slots || []
@@ -146,7 +150,7 @@ export const DoctorDetailScreen: React.FC = () => {
               <Ionicons name="checkmark-circle" size={20} color={Colors.success} />
             )}
           </View>
-          <Text style={styles.specialty}>{selectedDoctor.specialty_id}</Text>
+          <Text style={styles.specialty}>{getSpecialtyName(selectedDoctor.specialty_id)}</Text>
           <View style={styles.ratingContainer}>
             <View style={styles.stars}>
               {renderStars(selectedDoctor.rating)}

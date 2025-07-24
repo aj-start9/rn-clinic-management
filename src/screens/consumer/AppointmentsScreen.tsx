@@ -1,3 +1,4 @@
+import { useIsFocused } from '@react-navigation/native';
 import React, { useEffect, useState } from 'react';
 import {
   FlatList,
@@ -18,6 +19,7 @@ import { Appointment } from '../../types';
 
 export const AppointmentsScreen: React.FC = () => {
   const dispatch = useAppDispatch();
+  const isFocused = useIsFocused();
   const { user, doctorData } = useAppSelector((state) => state.auth);
   const { appointments, loading, error } = useAppSelector((state) => state.appointments);
   const { modalState, showConfirm, hideModal } = useModal();
@@ -38,7 +40,7 @@ export const AppointmentsScreen: React.FC = () => {
         doctorId
       }));
     }
-  }, [dispatch, user, doctorData]);
+  }, [dispatch, user, doctorData, isFocused]);
 
   const currentDate = new Date();
   

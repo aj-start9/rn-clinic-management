@@ -1,4 +1,4 @@
-import { useNavigation } from '@react-navigation/native';
+import { useIsFocused, useNavigation } from '@react-navigation/native';
 import React, { useEffect, useState } from 'react';
 import {
   Alert,
@@ -46,6 +46,7 @@ export const EnhancedAvailabilityScreen: React.FC = () => {
   const [endHour, setEndHour] = useState(17);
   const [slotDuration, setSlotDuration] = useState(30);
   const [hasLunchBreak, setHasLunchBreak] = useState(true);
+  const isFocused = useIsFocused();
 
   useEffect(() => {
     loadDoctorData();
@@ -55,13 +56,13 @@ export const EnhancedAvailabilityScreen: React.FC = () => {
     if (selectedClinic && selectedDate && doctorId) {
       generateDefaultSlots();
     }
-  }, [selectedClinic, selectedDate, doctorId, slotDuration]);
+  }, [selectedClinic, selectedDate, doctorId, slotDuration, isFocused]);
 
   useEffect(() => {
     if (selectedClinic && selectedDate && doctorId) {
       loadExistingAvailability();
     }
-  }, [selectedClinic, selectedDate, doctorId]);
+  }, [selectedClinic, selectedDate, doctorId, isFocused]);
 
   const loadDoctorData = async () => {
     if (!user?.id) return;
