@@ -23,63 +23,65 @@ export const MainTabNavigator: React.FC = () => {
 
   if (isDoctor) {
     return (
-      <Tab.Navigator
-        screenOptions={({ route }) => ({
-          tabBarIcon: ({ focused, color, size }) => {
-            let iconName: string = '';
+      <SafeAreaView edges={['bottom']} style={{ flex: 1, backgroundColor: Colors.background }}>
+        <Tab.Navigator
+          screenOptions={({ route }) => ({
+            tabBarIcon: ({ focused, color, size }) => {
+              let iconName: string = '';
 
-            switch (route.name) {
-              case 'Dashboard':
-                iconName = focused ? 'grid' : 'grid-outline';
-                break;
-              case 'DoctorAppointments':
-                iconName = focused ? 'calendar' : 'calendar-outline';
-                break;
-              case 'DoctorAvailability':
-                iconName = focused ? 'time' : 'time-outline';
-                break;
-              case 'Profile':
-                iconName = focused ? 'person' : 'person-outline';
-                break;
-            }
+              switch (route.name) {
+                case 'Dashboard':
+                  iconName = focused ? 'grid' : 'grid-outline';
+                  break;
+                case 'DoctorAppointments':
+                  iconName = focused ? 'calendar' : 'calendar-outline';
+                  break;
+                case 'DoctorAvailability':
+                  iconName = focused ? 'time' : 'time-outline';
+                  break;
+                case 'Profile':
+                  iconName = focused ? 'person' : 'person-outline';
+                  break;
+              }
 
-            return <Ionicons name={iconName as any} size={size} color={color} />;
-          },
-          tabBarActiveTintColor: Colors.primary,
-          tabBarInactiveTintColor: Colors.darkGray,
-          tabBarStyle: {
-            backgroundColor: Colors.white,
-            borderTopColor: Colors.lightGray,
-            paddingTop: 5,
-            paddingBottom: 5,
-            height: 50,
-            shadowColor: Colors.white,
-            shadowOpacity: 0,
-          },
-          headerShown: false,
-        })}
-      >
-        <Tab.Screen
-          name="Dashboard"
-          component={DoctorDashboardScreen}
-          options={{ title: 'Dashboard' }}
-        />
-        <Tab.Screen
-          name="DoctorAppointments"
-          component={AppointmentsScreen}
-          options={{ title: 'Appointments' }}
-        />
-        <Tab.Screen
-          name="DoctorAvailability"
-          component={EnhancedAvailabilityScreen}
-          options={{ title: 'Availability' }}
-        />
-        <Tab.Screen
-          name="Profile"
-          component={ProfileScreen}
-          options={{ title: 'Profile' }}
-        />
-      </Tab.Navigator>
+              return <Ionicons name={iconName as any} size={size} color={color} />;
+            },
+            tabBarActiveTintColor: Colors.primary,
+            tabBarInactiveTintColor: Colors.darkGray,
+            tabBarStyle: {
+              backgroundColor: Colors.white,
+              borderTopColor: Colors.lightGray,
+              paddingTop: 5,
+              paddingBottom: 5,
+              height: 50,
+              shadowColor: Colors.white,
+              shadowOpacity: 0,
+            },
+            headerShown: false,
+          })}
+        >
+          <Tab.Screen
+            name="Dashboard"
+            component={DoctorDashboardScreen}
+            options={{ title: 'Dashboard' }}
+          />
+          <Tab.Screen
+            name="DoctorAppointments"
+            component={AppointmentsScreen}
+            options={{ title: 'Appointments' }}
+          />
+          <Tab.Screen
+            name="DoctorAvailability"
+            component={EnhancedAvailabilityScreen}
+            options={{ title: 'Availability' }}
+          />
+          <Tab.Screen
+            name="Profile"
+            component={ProfileScreen}
+            options={{ title: 'Profile' }}
+          />
+        </Tab.Navigator>
+      </SafeAreaView>
     );
   }
 

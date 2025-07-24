@@ -72,9 +72,9 @@ export const ProfileScreen: React.FC = () => {
     },
     {
       icon: 'time-outline',
-      title: 'Availability Settings',
-      subtitle: 'Manage your appointment schedules',
-      onPress: () => navigation.navigate('DoctorAvailability' as never),
+      title: 'Clinic Availability',
+      subtitle: 'Manage your Clinic',
+      onPress: () => navigation.navigate('ClinicManagement' as never),
     },
   ];
 
@@ -89,16 +89,6 @@ export const ProfileScreen: React.FC = () => {
 
   // Common menu items
   const commonMenuItems = [
-    {
-      icon: 'notifications-outline',
-      title: 'Notifications',
-      onPress: () => {},
-    },
-    {
-      icon: 'card-outline',
-      title: 'Payment Methods',
-      onPress: () => {},
-    },
     {
       icon: 'help-circle-outline',
       title: 'Help & Support',
@@ -318,7 +308,7 @@ export const ProfileScreen: React.FC = () => {
       {/* Recent Activity Section */}
       {recentAppointments && recentAppointments.length > 0 && (
         <View style={styles.recentActivityContainer}>
-          <Text style={styles.sectionTitle}>Recent Appointments</Text>
+          <Text style={[styles.sectionTitle, {padding: Spacing.sm}]}>Recent Appointments</Text>
           {recentAppointments.slice(0, 3).map((appointment, index) => (
             <View key={appointment.id} style={styles.recentAppointmentItem}>
               <View style={styles.appointmentIcon}>
@@ -336,7 +326,7 @@ export const ProfileScreen: React.FC = () => {
                   }
                 </Text>
                 <Text style={styles.appointmentDate}>
-                  {new Date(appointment.appointment_date).toLocaleDateString()} at {appointment.time_slot}
+                  {new Date(appointment.date).toLocaleDateString()}
                 </Text>
               </View>
               <View style={[styles.statusBadge, { 
@@ -609,7 +599,7 @@ const styles = StyleSheet.create({
   recentAppointmentItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: Spacing.md,
+    padding: Spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: Colors.lightGray,
   },

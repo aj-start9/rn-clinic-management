@@ -144,6 +144,7 @@ export class UserStatsService {
   static async getRecentAppointments(userId: string, userRole: 'consumer' | 'doctor', limit: number = 5) {
     try {
       const userField = userRole === 'consumer' ? 'user_id' : 'doctor_id';
+      const userTable = userRole === 'consumer' ? 'users' : 'doctors';
       
       const { data: appointments, error } = await supabase
         .from('appointments')
@@ -153,7 +154,7 @@ export class UserStatsService {
           status,
           ${userRole === 'consumer' ? 'doctor_id, doctors(full_name, specialty_id)' : 'patient_id, users(full_name)'}
         `)
-        .eq('user_id', userId)
+        .eq(userField, userId)
       if (error) {
         console.error('Error fetching recent appointments:', error);
         return [];

@@ -116,10 +116,6 @@ export const ConsumerHomeScreen: React.FC = () => {
               <Text style={styles.userName}>{user?.full_name || 'User'}</Text>
             </View>
           </View>
-          <TouchableOpacity style={styles.notificationButton}>
-            <Ionicons name="notifications-outline" size={24} color={Colors.text.primary} />
-            <View style={styles.notificationDot} />
-          </TouchableOpacity>
         </View>
         {/* Stats Cards */}
         <View style={styles.statsContainer}>

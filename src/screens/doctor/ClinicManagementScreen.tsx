@@ -233,12 +233,6 @@ export const ClinicManagementScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scrollView}>
-        <View style={styles.header}>
-          <Text style={styles.subtitle}>
-            Add or select clinics where you practice
-          </Text>
-        </View>
-
         {/* My Clinics Section */}
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, {marginBottom: 10}]}>My Clinics ({doctorClinics.length})</Text>
@@ -341,6 +335,7 @@ const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
     padding: Spacing.lg,
+    paddingTop: 0
   },
   header: {
     marginBottom: Spacing.xl,
