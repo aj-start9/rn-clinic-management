@@ -2,11 +2,12 @@ import { Ionicons } from '@expo/vector-icons';
 import { RouteProp, useRoute } from '@react-navigation/native';
 import React from 'react';
 import {
-    ScrollView,
-    StyleSheet,
-    Text,
-    View,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Avatar } from '../../components/Avatar';
 import { Button } from '../../components/Button';
 import { CustomModal } from '../../components/CustomModal';
@@ -23,11 +24,11 @@ export const BookAppointmentScreen: React.FC = () => {
   const navigation = useNavigation();
   const route = useRoute<BookAppointmentRouteProp>();
   const dispatch = useAppDispatch();
-  
+
   const { user } = useAppSelector((state) => state.auth);
   const { loading } = useAppSelector((state) => state.appointments);
   const { modalState, showError, showSuccess, hideModal } = useModal();
-  
+
   const { doctor, date, slot, clinic } = route.params;
 
   const getGreeting = () => {
@@ -45,7 +46,7 @@ export const BookAppointmentScreen: React.FC = () => {
 
     try {
       // Choose approach based on your needs:
-      
+
       // Option 1: Complex booking with immediate confirmation (Edge Function)
       const result = await appointmentService.createAppointmentWithConfirmation({
         doctor_id: doctor.id,
@@ -65,14 +66,14 @@ export const BookAppointmentScreen: React.FC = () => {
           navigation.goBack();
         }
       );
-      
+
     } catch (error: any) {
       console.error('Edge function booking failed:', error);
-      
+
       // Fallback: Simple appointment creation (Triggers handle notifications)
       try {
         console.log('Trying fallback: simple appointment creation...');
-        
+
         // This uses database triggers for all complex operations
         const result = await appointmentService.createAppointment({
           doctor_id: doctor.id,
@@ -92,7 +93,7 @@ export const BookAppointmentScreen: React.FC = () => {
             navigation.goBack();
           }
         );
-        
+
       } catch (fallbackError: any) {
         console.error('All booking methods failed:', fallbackError);
         showError('Error', fallbackError.message || 'Failed to book appointment. Please try again.');
@@ -119,127 +120,127 @@ export const BookAppointmentScreen: React.FC = () => {
   }
 
   return (
-    <>
+    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: Colors.background }}>
       <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      <Text style={styles.title}>
-        {getGreeting()}, {user?.full_name || 'User'}
-      </Text>
-      <Text style={styles.subtitle}>Let's confirm your appointment</Text>
-      {/* Doctor Info */}
-      <View style={styles.card}>
-        <View style={styles.doctorInfo}>
-          <Avatar
-            name={doctor.name}
-            role="doctor"
-            size={80}
-          />
-          <View style={styles.doctorDetails}>
-            <Text style={styles.doctorName}>{doctor.name}</Text>
-            <Text style={styles.specialty}>{doctor.specialty_id}</Text>
-            <View style={styles.ratingContainer}>
-              <Ionicons name="star" size={16} color="#FFD700" />
-              <Text style={styles.rating}>{doctor.rating}</Text>
-              <Text style={styles.experience}>• {doctor.experience_years} years</Text>
+        <Text style={styles.title}>
+          {getGreeting()}, {user?.full_name || 'User'}
+        </Text>
+        <Text style={styles.subtitle}>Let's confirm your appointment</Text>
+        {/* Doctor Info */}
+        <View style={styles.card}>
+          <View style={styles.doctorInfo}>
+            <Avatar
+              name={doctor.name}
+              role="doctor"
+              size={80}
+            />
+            <View style={styles.doctorDetails}>
+              <Text style={styles.doctorName}>{doctor.name}</Text>
+              <Text style={styles.specialty}>{doctor.specialty_id}</Text>
+              <View style={styles.ratingContainer}>
+                <Ionicons name="star" size={16} color="#FFD700" />
+                <Text style={styles.rating}>{doctor.rating}</Text>
+                <Text style={styles.experience}>• {doctor.experience_years} years</Text>
+              </View>
             </View>
           </View>
         </View>
-      </View>
 
-      {/* Appointment Details */}
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>Appointment Details</Text>
-        
-        <View style={styles.detailRow}>
-          <Ionicons name="calendar-outline" size={20} color={Colors.primary} />
-          <View style={styles.detailContent}>
-            <Text style={styles.detailLabel}>Date</Text>
-            <Text style={styles.detailValue}>{formatDate(date)}</Text>
+        {/* Appointment Details */}
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Appointment Details</Text>
+
+          <View style={styles.detailRow}>
+            <Ionicons name="calendar-outline" size={20} color={Colors.primary} />
+            <View style={styles.detailContent}>
+              <Text style={styles.detailLabel}>Date</Text>
+              <Text style={styles.detailValue}>{formatDate(date)}</Text>
+            </View>
+          </View>
+
+          <View style={styles.detailRow}>
+            <Ionicons name="time-outline" size={20} color={Colors.primary} />
+            <View style={styles.detailContent}>
+              <Text style={styles.detailLabel}>Time</Text>
+              <Text style={styles.detailValue}>{slot.time}</Text>
+            </View>
+          </View>
+
+          <View style={styles.detailRow}>
+            <Ionicons name="location-outline" size={20} color={Colors.primary} />
+            <View style={styles.detailContent}>
+              <Text style={styles.detailLabel}>Clinic</Text>
+              <Text style={styles.detailValue}>{clinic.name}</Text>
+              <Text style={styles.detailSubvalue}>{clinic.address}</Text>
+            </View>
           </View>
         </View>
 
-        <View style={styles.detailRow}>
-          <Ionicons name="time-outline" size={20} color={Colors.primary} />
-          <View style={styles.detailContent}>
-            <Text style={styles.detailLabel}>Time</Text>
-            <Text style={styles.detailValue}>{slot.time}</Text>
+        {/* Payment Summary */}
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Payment Summary</Text>
+
+          <View style={styles.paymentRow}>
+            <Text style={styles.paymentLabel}>Consultation Fee</Text>
+            <Text style={styles.paymentValue}>${doctor.fee}</Text>
+          </View>
+
+          <View style={styles.paymentRow}>
+            <Text style={styles.paymentLabel}>Platform Fee</Text>
+            <Text style={styles.paymentValue}>$5</Text>
+          </View>
+
+          <View style={[styles.paymentRow, styles.totalRow]}>
+            <Text style={styles.totalLabel}>Total Amount</Text>
+            <Text style={styles.totalValue}>${doctor.fee + 5}</Text>
           </View>
         </View>
 
-        <View style={styles.detailRow}>
-          <Ionicons name="location-outline" size={20} color={Colors.primary} />
-          <View style={styles.detailContent}>
-            <Text style={styles.detailLabel}>Clinic</Text>
-            <Text style={styles.detailValue}>{clinic.name}</Text>
-            <Text style={styles.detailSubvalue}>{clinic.address}</Text>
+        {/* Terms & Conditions */}
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Important Notes</Text>
+          <View style={styles.noteItem}>
+            <Ionicons name="information-circle-outline" size={16} color={Colors.primary} />
+            <Text style={styles.noteText}>
+              Please arrive 15 minutes before your appointment time
+            </Text>
+          </View>
+          <View style={styles.noteItem}>
+            <Ionicons name="card-outline" size={16} color={Colors.primary} />
+            <Text style={styles.noteText}>
+              Payment will be processed after the consultation
+            </Text>
+          </View>
+          <View style={styles.noteItem}>
+            <Ionicons name="calendar-outline" size={16} color={Colors.primary} />
+            <Text style={styles.noteText}>
+              You can reschedule up to 2 hours before the appointment
+            </Text>
           </View>
         </View>
-      </View>
 
-      {/* Payment Summary */}
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>Payment Summary</Text>
-        
-        <View style={styles.paymentRow}>
-          <Text style={styles.paymentLabel}>Consultation Fee</Text>
-          <Text style={styles.paymentValue}>${doctor.fee}</Text>
+        {/* Book Button */}
+        <View style={styles.bookingContainer}>
+          <Button
+            title="Confirm Booking"
+            onPress={handleBookAppointment}
+            loading={loading}
+            style={styles.bookButton}
+          />
         </View>
-        
-        <View style={styles.paymentRow}>
-          <Text style={styles.paymentLabel}>Platform Fee</Text>
-          <Text style={styles.paymentValue}>$5</Text>
-        </View>
-        
-        <View style={[styles.paymentRow, styles.totalRow]}>
-          <Text style={styles.totalLabel}>Total Amount</Text>
-          <Text style={styles.totalValue}>${doctor.fee + 5}</Text>
-        </View>
-      </View>
+      </ScrollView>
 
-      {/* Terms & Conditions */}
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>Important Notes</Text>
-        <View style={styles.noteItem}>
-          <Ionicons name="information-circle-outline" size={16} color={Colors.primary} />
-          <Text style={styles.noteText}>
-            Please arrive 15 minutes before your appointment time
-          </Text>
-        </View>
-        <View style={styles.noteItem}>
-          <Ionicons name="card-outline" size={16} color={Colors.primary} />
-          <Text style={styles.noteText}>
-            Payment will be processed after the consultation
-          </Text>
-        </View>
-        <View style={styles.noteItem}>
-          <Ionicons name="calendar-outline" size={16} color={Colors.primary} />
-          <Text style={styles.noteText}>
-            You can reschedule up to 2 hours before the appointment
-          </Text>
-        </View>
-      </View>
-
-      {/* Book Button */}
-      <View style={styles.bookingContainer}>
-        <Button
-          title="Confirm Booking"
-          onPress={handleBookAppointment}
-          loading={loading}
-          style={styles.bookButton}
-        />
-      </View>
-    </ScrollView>
-
-    <CustomModal
-      isVisible={modalState.isVisible}
-      type={modalState.type}
-      title={modalState.title}
-      message={modalState.message}
-      primaryButtonText={modalState.primaryButtonText}
-      secondaryButtonText={modalState.secondaryButtonText}
-      onPrimaryPress={modalState.onPrimaryPress || hideModal}
-      onSecondaryPress={modalState.onSecondaryPress}
-    />
-  </>
+      <CustomModal
+        isVisible={modalState.isVisible}
+        type={modalState.type}
+        title={modalState.title}
+        message={modalState.message}
+        primaryButtonText={modalState.primaryButtonText}
+        secondaryButtonText={modalState.secondaryButtonText}
+        onPrimaryPress={modalState.onPrimaryPress || hideModal}
+        onSecondaryPress={modalState.onSecondaryPress}
+      />
+    </SafeAreaView>
   );
 };
 

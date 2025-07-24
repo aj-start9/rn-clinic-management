@@ -10,6 +10,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '../../components/Button';
 import { DoctorCard } from '../../components/DoctorCard';
 import { SearchBar } from '../../components/SearchBar';
@@ -35,7 +36,7 @@ export const DoctorListScreen: React.FC = () => {
   useEffect(() => {
     dispatch(fetchDoctors());
     dispatch(fetchSpecialties());
-    
+
     // Set initial specialty filter if passed from navigation
     if (route.params?.specialty) {
       dispatch(setFilters({ specialty_id: route.params.specialty }));
@@ -209,38 +210,40 @@ export const DoctorListScreen: React.FC = () => {
   );
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <SearchBar
-          value={searchQuery}
-          onChangeText={handleSearch}
-          onFilterPress={() => setShowFilters(true)}
-        />
-      </View>
-
-      <FlatList
-        data={filteredDoctors}
-        renderItem={renderDoctor}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.listContainer}
-        refreshControl={
-          <RefreshControl
-            refreshing={loading}
-            onRefresh={() => dispatch(fetchDoctors())}
-            colors={[Colors.primary]}
+    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: Colors.background }}>
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <SearchBar
+            value={searchQuery}
+            onChangeText={handleSearch}
+            onFilterPress={() => setShowFilters(true)}
           />
-        }
-        ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <Ionicons name="search" size={48} color={Colors.darkGray} />
-            <Text style={styles.emptyText}>No doctors found</Text>
-            <Text style={styles.emptySubtext}>Try adjusting your search or filters</Text>
-          </View>
-        }
-      />
+        </View>
 
-      {renderFilterModal()}
-    </View>
+        <FlatList
+          data={filteredDoctors}
+          renderItem={renderDoctor}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.listContainer}
+          refreshControl={
+            <RefreshControl
+              refreshing={loading}
+              onRefresh={() => dispatch(fetchDoctors())}
+              colors={[Colors.primary]}
+            />
+          }
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <Ionicons name="search" size={48} color={Colors.darkGray} />
+              <Text style={styles.emptyText}>No doctors found</Text>
+              <Text style={styles.emptySubtext}>Try adjusting your search or filters</Text>
+            </View>
+          }
+        />
+
+        {renderFilterModal()}
+      </View>
+    </SafeAreaView>
   );
 };
 

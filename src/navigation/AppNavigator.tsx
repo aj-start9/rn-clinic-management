@@ -1,4 +1,4 @@
-import { NavigationContainer } from '@react-navigation/native';
+import { DefaultTheme, NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React, { useEffect } from 'react';
 import { checkDoctorOnboarding, checkStoredAuth } from '../redux/authSlice.supabase';
@@ -35,8 +35,16 @@ export const AppNavigator: React.FC = () => {
       dispatch(checkDoctorOnboarding(user.id));
     }
   }, [user, dispatch]);
+
+    const darkTheme = {
+    ...DefaultTheme,
+    colors: {
+      ...DefaultTheme.colors,
+      background: 'white', // Set background to transparent
+    },
+  };
   return (
-    <NavigationContainer>
+    <NavigationContainer theme={darkTheme}>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         {user ? (
           <>

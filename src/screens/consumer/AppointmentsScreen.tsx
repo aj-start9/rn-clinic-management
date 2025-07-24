@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { AppointmentCard } from '../../components/AppointmentCard';
 import { CustomModal } from '../../components/CustomModal';
 import { BorderRadius, Colors, Spacing, Typography } from '../../constants/theme';
@@ -88,7 +89,7 @@ export const AppointmentsScreen: React.FC = () => {
   const currentAppointments = activeTab === 'upcoming' ? upcomingAppointments : pastAppointments;
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       {/* Tab Navigation */}
       <View style={styles.tabContainer}>
         <TouchableOpacity
@@ -165,7 +166,7 @@ export const AppointmentsScreen: React.FC = () => {
         onSecondaryPress={modalState.onSecondaryPress}
         onBackdropPress={hideModal}
       />
-    </View>
+    </SafeAreaView>
   );
 };
 

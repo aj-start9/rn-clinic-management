@@ -3,7 +3,7 @@ import './src/polyfills';
 
 import React from 'react';
 import { AppRegistry, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Provider } from 'react-redux';
 import { AppInitializer } from './src/components/AppInitializer';
 import { Colors } from './src/constants/theme';
@@ -78,11 +78,11 @@ function App() {
 
   return (
     <Provider store={store}>
-      <SafeAreaView edges={['bottom', 'top']} style={{ flex: 1, backgroundColor: Colors.background }}>
+      <SafeAreaProvider  style={{ flex: 1, backgroundColor: Colors.background }}>
         <AppInitializer>
           <AppNavigator />
         </AppInitializer>
-      </SafeAreaView>
+      </SafeAreaProvider>
     </Provider>
   );
 }

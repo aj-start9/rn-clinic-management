@@ -153,7 +153,7 @@ export class UserStatsService {
           status,
           ${userRole === 'consumer' ? 'doctor_id, doctors(full_name, specialty_id)' : 'patient_id, users(full_name)'}
         `)
-        .eq('user_id', '${userId}')
+        .eq('user_id', userId)
       if (error) {
         console.error('Error fetching recent appointments:', error);
         return [];
