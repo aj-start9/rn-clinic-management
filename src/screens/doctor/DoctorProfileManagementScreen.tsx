@@ -1,14 +1,14 @@
 import { useNavigation } from '@react-navigation/native';
 import React, { useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -172,6 +172,7 @@ export const DoctorProfileManagementScreen: React.FC = () => {
             }
             keyboardType="numeric"
             placeholder="Enter years of experience"
+            placeholderTextColor={Colors.text.secondary}
           />
         </View>
 
@@ -186,6 +187,7 @@ export const DoctorProfileManagementScreen: React.FC = () => {
             }
             keyboardType="numeric"
             placeholder="Enter consultation fee"
+            placeholderTextColor={Colors.text.secondary}
           />
         </View>
 
@@ -199,6 +201,7 @@ export const DoctorProfileManagementScreen: React.FC = () => {
               setProfileData({ ...profileData, license_number: text })
             }
             placeholder="Enter license number"
+            placeholderTextColor={Colors.text.secondary}
           />
         </View>
 
@@ -216,6 +219,7 @@ export const DoctorProfileManagementScreen: React.FC = () => {
             placeholder="Tell patients about yourself"
             multiline
             numberOfLines={4}
+            placeholderTextColor={Colors.text.secondary}
           />
         </View>
 

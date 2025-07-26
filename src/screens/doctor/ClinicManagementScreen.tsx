@@ -269,6 +269,7 @@ export const ClinicManagementScreen: React.FC = () => {
                 placeholder="Clinic Name *"
                 value={newClinic.name}
                 onChangeText={(text) => setNewClinic(prev => ({ ...prev, name: text }))}
+                placeholderTextColor={Colors.text.secondary}
               />
 
               <TextInput
@@ -277,6 +278,7 @@ export const ClinicManagementScreen: React.FC = () => {
                 value={newClinic.address}
                 onChangeText={(text) => setNewClinic(prev => ({ ...prev, address: text }))}
                 multiline
+                placeholderTextColor={Colors.text.secondary}
               />
 
               <TextInput
@@ -286,6 +288,7 @@ export const ClinicManagementScreen: React.FC = () => {
                 onChangeText={(text) => setNewClinic(prev => ({ ...prev, phone: text }))}
                 keyboardType="phone-pad"
                 maxLength={10}
+                placeholderTextColor={Colors.text.secondary}
               />
 
               <TextInput
@@ -295,6 +298,7 @@ export const ClinicManagementScreen: React.FC = () => {
                 onChangeText={(text) => setNewClinic(prev => ({ ...prev, email: text }))}
                 keyboardType="email-address"
                 autoCapitalize="none"
+                placeholderTextColor={Colors.text.secondary}
               />
 
               <View style={styles.formActions}>
