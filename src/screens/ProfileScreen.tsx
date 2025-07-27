@@ -143,18 +143,6 @@ export const ProfileScreen: React.FC = () => {
               editable={true}
             />
           </View>
-
-          <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>Full Name</Text>
-            <TextInput
-              style={styles.input}
-              value={editedName}
-              onChangeText={setEditedName}
-              placeholder="Enter your full name"
-              placeholderTextColor={Colors.darkGray}
-            />
-          </View>
-
           <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>Email</Text>
             <TextInput
@@ -165,7 +153,6 @@ export const ProfileScreen: React.FC = () => {
               placeholderTextColor={Colors.darkGray}
             />
           </View>
-
           <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>Location</Text>
             <TextInput
