@@ -205,6 +205,12 @@ export const signUpWithTrigger = async (email: string, password: string, role: '
       throw new Error('Supabase auth service not available');
     }
 
+    // Generate avatar URL for dummy image
+    const { generateAvatarRole, previewAvatarImage } = await import('../utils/avatarUtils');
+    const tempUserId = Math.random().toString(36).substring(7); // Temporary ID for avatar generation
+    const avatarRole = generateAvatarRole(role, tempUserId);
+    const avatarUrl = previewAvatarImage(role, avatarRole);
+
     const { data, error } = await client.auth.signUp({
       email,
       password,
@@ -212,15 +218,12 @@ export const signUpWithTrigger = async (email: string, password: string, role: '
         data: {
           role,
           full_name: fullName,
+          avatar_url: avatarUrl,
         }
       }
     });
 
-    console.log('SignUp response:', { 
-      user: data?.user ? 'User created' : 'No user', 
-      session: data?.session ? 'Session created' : 'No session',
-      error: error?.message || 'No error' 
-    });
+    console.log('SignUp response:', error);
 
     if (error) {
       console.error('SignUp error:', error);
@@ -290,6 +293,7 @@ export const getCurrentUser = async () => {
       role: profile?.role,
       full_name: profile?.full_name,
       avatar_url: profile?.avatar_url,
+      avatar_role: profile?.avatar_role,
       location: profile?.location,
       doctorProfile: profile?.doctor || null,
       isDoctor: profile?.role === 'doctor',

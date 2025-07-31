@@ -48,7 +48,7 @@ export const DoctorCard: React.FC<DoctorCardProps> = ({ doctor, onPress }) => {
   const getSpecialtyName = (specialtyId: string) => {
     return specialties.filter((spec: any) => spec.id === specialtyId)[0]?.name;
   }
-
+  console.log('Doctor:', doctor);
   return (
     <TouchableOpacity style={styles.container} onPress={onPress} activeOpacity={0.8}>
       <View style={styles.header}>
@@ -56,6 +56,8 @@ export const DoctorCard: React.FC<DoctorCardProps> = ({ doctor, onPress }) => {
           name={doctor.name}
           role="doctor"
           size={60}
+          imageUrl={doctor.photo_url}
+          avatarRole={doctor.id}
         />
         <View style={styles.info}>
           <Text style={styles.name}>{doctor.name || 'Unknown Doctor'}</Text>

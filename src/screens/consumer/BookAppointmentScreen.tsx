@@ -129,6 +129,8 @@ export const BookAppointmentScreen: React.FC = () => {
               name={doctor.name}
               role="doctor"
               size={80}
+              imageUrl={doctor.photo_url}
+              avatarRole={doctor.id}
             />
             <View style={styles.doctorDetails}>
               <Text style={styles.doctorName}>{doctor.name}</Text>

@@ -142,6 +142,8 @@ export const DoctorDetailScreen: React.FC = () => {
           name={selectedDoctor.name}
           role="doctor"
           size={100}
+          imageUrl={selectedDoctor.photo_url}
+          avatarRole={selectedDoctor.id}
         />
         <View style={[styles.doctorDetails, { marginTop: Spacing.sm }]}>
           <View style={styles.nameContainer}>

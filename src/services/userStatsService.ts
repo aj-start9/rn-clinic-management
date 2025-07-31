@@ -91,7 +91,7 @@ export class UserStatsService {
     const client = await getSupabase();
     const { data: appointments, error: appointmentsError } = await client
       .from('appointments')
-      .select('id, status')
+      .select('*')
       .eq('doctor_id', userId);
 
     if (appointmentsError) {
@@ -109,23 +109,6 @@ export class UserStatsService {
     // Get ratings received by this doctor (if ratings table exists)
     let totalRatings = 0;
     let averageRating = 0;
-    
-    try {
-      const { data: ratings, error: ratingsError } = await supabase
-        .from('appointment_ratings')
-        .select('rating')
-        .eq('doctor_id', userId);
-
-      if (!ratingsError && ratings) {
-        totalRatings = ratings.length;
-        averageRating = totalRatings > 0 
-          ? ratings.reduce((sum: any, r: any) => sum + r.rating, 0) / totalRatings 
-          : 0;
-      }
-    } catch (error) {
-      // Ratings table might not exist yet - this is okay
-      console.log('Ratings table not found, skipping ratings calculation');
-    }
 
     return {
       totalAppointments,
@@ -145,7 +128,7 @@ export class UserStatsService {
     try {
       const userField = userRole === 'consumer' ? 'user_id' : 'doctor_id';
       const userTable = userRole === 'consumer' ? 'users' : 'doctors';
-      
+      console.log('Fetching recent appointments for:', userId, userRole);
       const { data: appointments, error } = await supabase
         .from('appointments')
         .select(`

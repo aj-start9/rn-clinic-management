@@ -72,6 +72,9 @@ export const AppointmentCard: React.FC<AppointmentCardProps> = ({
   // For consumers viewing appointments: they see doctors (role = 'doctor')
   // For doctors viewing appointments: they see patients/consumers (role = 'consumer')
   const avatarRole = userRole === 'consumer' ? 'doctor' : 'consumer';
+  const avatarRoleId = userRole === 'consumer' 
+    ? appointment.doctor?.id || appointment.doctor_id
+    : appointment.user?.id || appointment.patient_id;
 
   return (
     <TouchableOpacity style={styles.container} onPress={onPress} activeOpacity={0.8}>
@@ -80,6 +83,7 @@ export const AppointmentCard: React.FC<AppointmentCardProps> = ({
           name={displayName}
           role={avatarRole}
           size={50}
+          avatarRole={avatarRoleId}
         />
         <View style={styles.info}>
           <Text style={styles.name}>{displayName}</Text>

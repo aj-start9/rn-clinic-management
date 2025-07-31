@@ -59,18 +59,20 @@ RETURNS TRIGGER AS $$
 DECLARE
   user_role TEXT;
   user_name TEXT;
+  user_avatar_url TEXT;
 BEGIN
-  -- Extract role and name from user metadata
+  -- Extract role, name, and avatar_url from user metadata
   user_role := COALESCE(NEW.raw_user_meta_data->>'role', 'consumer');
   user_name := COALESCE(
     NEW.raw_user_meta_data->>'full_name',
     NEW.raw_user_meta_data->>'name',
     split_part(NEW.email, '@', 1)
   );
+  user_avatar_url := NEW.raw_user_meta_data->>'avatar_url';
   
   -- Insert profile
-  INSERT INTO profiles (id, role, full_name)
-  VALUES (NEW.id, user_role, user_name);
+  INSERT INTO profiles (id, role, full_name, avatar_url)
+  VALUES (NEW.id, user_role, user_name, user_avatar_url);
   
   -- If user is a doctor, create initial doctor record
   IF user_role = 'doctor' THEN

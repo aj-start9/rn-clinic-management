@@ -4,6 +4,7 @@ export interface User {
   role: 'consumer' | 'doctor';
   full_name?: string;
   avatar_url?: string;
+  avatar_role?: string;
   location?: string;
 }
 
@@ -81,6 +82,7 @@ export interface Profile {
   role: 'consumer' | 'doctor';
   full_name: string;
   avatar_url?: string;
+  avatar_role?: string; // For dummy avatar based on role
   location?: string;
   phone?: string;
   date_of_birth?: string;

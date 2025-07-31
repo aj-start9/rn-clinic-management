@@ -39,6 +39,7 @@ CREATE TABLE profiles (
   role TEXT NOT NULL CHECK (role IN ('consumer', 'doctor')),
   full_name TEXT,
   avatar_url TEXT,
+  avatar_role TEXT,
   location TEXT,
   phone TEXT,
   date_of_birth DATE,

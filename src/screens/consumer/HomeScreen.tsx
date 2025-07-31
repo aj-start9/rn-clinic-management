@@ -91,14 +91,6 @@ export const ConsumerHomeScreen: React.FC = () => {
     </View>
   );
 
-  const renderQuickAction = (icon: string, title: string, onPress: () => void) => (
-    <TouchableOpacity style={styles.quickActionCard} onPress={onPress}>
-      <View style={styles.quickActionIcon}>
-        <Ionicons name={icon as any} size={28} color={Colors.primary} />
-      </View>
-      <Text style={styles.quickActionText}>{title}</Text>
-    </TouchableOpacity>
-  );
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
@@ -110,6 +102,8 @@ export const ConsumerHomeScreen: React.FC = () => {
               name={user?.full_name}
               role="consumer"
               size={50}
+              imageUrl={user?.avatar_url}
+              avatarRole={user?.avatar_role}
             />
             <View style={styles.greetingContainer}>
               <Text style={styles.greeting}>{getGreeting()},</Text>

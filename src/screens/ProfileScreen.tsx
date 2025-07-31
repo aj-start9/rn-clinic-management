@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useIsFocused, useNavigation } from '@react-navigation/native';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
   RefreshControl,
   ScrollView,
@@ -17,7 +17,6 @@ import { BorderRadius, Colors, Shadow, Spacing, Typography } from '../constants/
 import { useModal } from '../hooks/useModal';
 import { signOutUser } from '../redux/authSlice.supabase';
 import { useAppDispatch, useAppSelector } from '../redux/hooks';
-import { fetchUserStats } from '../redux/userStatsSlice';
 export const ProfileScreen: React.FC = () => {
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
@@ -31,20 +30,6 @@ export const ProfileScreen: React.FC = () => {
   const [refreshing, setRefreshing] = useState(false);
  const isFocused = useIsFocused();
   const isDoctor = user?.role === 'doctor';
-
-  // Fetch user stats on component mount
-  useEffect(() => {
-    if (user?.id && user?.role) {
-      dispatch(fetchUserStats({ 
-        userId: user.id, 
-        userRole: user.role as 'consumer' | 'doctor' 
-      }));
-    }
-  }, [dispatch, user?.id, user?.role, isFocused]);
-
-  const handleRefresh = async () => {
-   
-  };
 
   const handleLogout = () => {
     showConfirm(
@@ -141,6 +126,8 @@ export const ProfileScreen: React.FC = () => {
               role={user?.role}
               size={120}
               editable={true}
+              imageUrl={user?.avatar_url}
+              avatarRole={user?.avatar_role}
             />
           </View>
           <View style={styles.inputContainer}>
@@ -193,7 +180,6 @@ export const ProfileScreen: React.FC = () => {
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
-            onRefresh={handleRefresh}
             colors={[Colors.primary]}
             tintColor={Colors.primary}
           />
@@ -205,6 +191,8 @@ export const ProfileScreen: React.FC = () => {
           name={user?.full_name}
           role={user?.role}
           size={120}
+          imageUrl={user?.avatar_url}
+          avatarRole={user?.avatar_role}
         />
         <Text style={styles.profileName}>{user?.full_name || 'User'}</Text>
         <Text style={styles.profileEmail}>{user?.email}</Text>
@@ -214,131 +202,6 @@ export const ProfileScreen: React.FC = () => {
           </Text>
         </View>
       </View>
-
-      {/* Profile Stats - 6 stats in 2 rows of 3 */}
-      <View style={styles.statsMainContainer}>
-        {/* First Row */}
-        <View style={styles.statsRow}>
-          <View style={styles.statItem}>
-            <Ionicons 
-              name={isDoctor ? "people-outline" : "calendar-outline"} 
-              size={20} 
-              color={Colors.primary} 
-              style={styles.statIcon}
-            />
-            <Text style={styles.statNumber}>
-              {statsLoading ? '...' : (stats?.totalAppointments || 0)}
-            </Text>
-          </View>
-          <View style={styles.statItem}>
-            <Ionicons 
-              name="checkmark-circle-outline" 
-              size={20} 
-              color={Colors.success} 
-              style={styles.statIcon}
-            />
-            <Text style={styles.statNumber}>
-              {statsLoading ? '...' : (stats?.completedAppointments || 0)}
-            </Text>
-          </View>
-          <View style={styles.statItem}>
-            <Ionicons 
-              name="star-outline" 
-              size={20} 
-              color={Colors.warning} 
-              style={styles.statIcon}
-            />
-            <Text style={styles.statNumber}>
-              {statsLoading ? '...' : (stats?.averageRating ? stats.averageRating.toFixed(1) : '0.0')}
-            </Text>
-          </View>
-        </View>
-
-        {/* Second Row */}
-        <View style={styles.statsRow}>
-          <View style={styles.statItem}>
-            <Ionicons 
-              name="time-outline" 
-              size={20} 
-              color={Colors.accent} 
-              style={styles.statIcon}
-            />
-            <Text style={styles.statNumber}>
-              {statsLoading ? '...' : (stats?.pendingAppointments || 0)}
-            </Text>
-          </View>
-          <View style={styles.statItem}>
-            <Ionicons 
-              name="chatbubbles-outline" 
-              size={20} 
-              color={Colors.primary} 
-              style={styles.statIcon}
-            />
-            <Text style={styles.statNumber}>
-              {statsLoading ? '...' : (stats?.totalRatings || 0)}
-            </Text>
-          </View>
-          <View style={styles.statItem}>
-            <Ionicons 
-              name={isDoctor ? "cash-outline" : "wallet-outline"} 
-              size={20} 
-              color={Colors.success} 
-              style={styles.statIcon}
-            />
-            <Text style={styles.statNumber}>
-              ${statsLoading ? '...' : (isDoctor ? (stats?.totalEarned || 0) : (stats?.totalSpent || 0))}
-            </Text>
-          </View>
-        </View>
-      </View>
-
-      {/* Recent Activity Section */}
-      {recentAppointments && recentAppointments.length > 0 && (
-        <View style={styles.recentActivityContainer}>
-          <Text style={[styles.sectionTitle, {padding: Spacing.sm}]}>Recent Appointments</Text>
-          {recentAppointments.slice(0, 3).map((appointment, index) => (
-            <View key={appointment.id} style={styles.recentAppointmentItem}>
-              <View style={styles.appointmentIcon}>
-                <Ionicons 
-                  name="calendar-outline" 
-                  size={16} 
-                  color={Colors.primary} 
-                />
-              </View>
-              <View style={styles.appointmentDetails}>
-                <Text style={styles.appointmentTitle}>
-                  {isDoctor 
-                    ? appointment.users?.full_name || 'Patient' 
-                    : appointment.doctors?.name || 'Doctor'
-                  }
-                </Text>
-                <Text style={styles.appointmentDate}>
-                  {new Date(appointment.date).toLocaleDateString()}
-                </Text>
-              </View>
-              <View style={[styles.statusBadge, { 
-                backgroundColor: appointment.status === 'completed' ? Colors.success : 
-                                appointment.status === 'cancelled' ? Colors.error : Colors.warning 
-              }]}>
-                <Text style={styles.statusText}>
-                  {appointment.status}
-                </Text>
-              </View>
-            </View>
-          ))}
-        </View>
-      )}
-
-      {/* Error State */}
-      {statsError && (
-        <View style={styles.errorContainer}>
-          <Ionicons name="alert-circle-outline" size={24} color={Colors.error} />
-          <Text style={styles.errorText}>Failed to load profile data</Text>
-          <TouchableOpacity onPress={handleRefresh} style={styles.retryButton}>
-            <Text style={styles.retryText}>Retry</Text>
-          </TouchableOpacity>
-        </View>
-      )}
 
       {/* Menu Items */}
       <View style={styles.menuContainer}>

@@ -196,6 +196,9 @@ export const getDoctors = async () => {
     .from('doctors')
     .select(`
       *,
+      profiles (
+        avatar_url
+      ),
       doctor_clinics (
         clinic:clinics (
           id,
@@ -206,7 +209,6 @@ export const getDoctors = async () => {
     `)
     .eq('profile_completed', true) // Only show doctors with completed profiles
     .order('created_at', { ascending: false });
-  
   if (error) {
     console.error('Error fetching doctors:', error);
     return { data: null, error };

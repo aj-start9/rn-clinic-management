@@ -38,11 +38,16 @@ export const signUpUser = createAsyncThunk(
         throw new Error('Signup failed: No user returned');
       }
 
+      const { generateAvatarRole, previewAvatarImage } = await import('../utils/avatarUtils');
+      const tempUserId = Math.random().toString(36).substring(7); // Temporary ID for avatar generation
+      const avatarRole = generateAvatarRole(role, tempUserId);
+      const avatarUrl = previewAvatarImage(role, avatarRole);
       const userData = {
         id: data.user.id,
         email: data.user.email || '',
         role,
         full_name: fullName,
+        avatar_url: avatarUrl || '',
       };
 
       // Store tokens and user data
@@ -107,7 +112,7 @@ export const signInUser = createAsyncThunk(
         avatar_url: userProfile.avatar_url,
         location: userProfile.location,
       } : null;
-
+      console.log('User data:', userData);
       // Store tokens and user data
       if (data.session?.access_token && userData) {
         console.log('Storing tokens and user data...');
