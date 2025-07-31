@@ -28,24 +28,18 @@ export const previewAvatarImage = (role: 'consumer' | 'doctor', avatarRole: stri
       'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=300&h=300&fit=crop&crop=face',
       'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=300&h=300&fit=crop&crop=face',
       'https://images.unsplash.com/photo-1582750433449-648ed127bb54?w=300&h=300&fit=crop&crop=face',
-      'https://images.unsplash.com/photo-1594824420015-bd81bd6f9fd9?w=300&h=300&fit=crop&crop=face',
       'https://images.unsplash.com/photo-1563902690319-d0b65ba4df47?w=300&h=300&fit=crop&crop=face',
-      'https://images.unsplash.com/photo-1606721977762-10e49a1a6b6b?w=300&h=300&fit=crop&crop=face',
       'https://images.unsplash.com/photo-1537368910025-700350fe46c7?w=300&h=300&fit=crop&crop=face',
       'https://images.unsplash.com/photo-1602002418082-a4443e081dd1?w=300&h=300&fit=crop&crop=face',
-      'https://images.unsplash.com/photo-1628348068343-c6a848d2d497?w=300&h=300&fit=crop&crop=face',
-      'https://images.unsplash.com/photo-1609221511881-5b5ad9b4fdd1?w=300&h=300&fit=crop&crop=face',
 
       // Additional 40 doctor avatars
       'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=300&h=300&fit=crop&crop=face',
-      'https://images.unsplash.com/photo-1554568218-0a3e56c4f87d?w=300&h=300&fit=crop&crop=face',
       'https://images.unsplash.com/photo-1590086782792-42dd1d5c46e4?w=300&h=300&fit=crop&crop=face',
       'https://images.unsplash.com/photo-1504593811423-6dd665756598?w=300&h=300&fit=crop&crop=face',
       'https://images.unsplash.com/photo-1573495628367-3f45f75f9d89?w=300&h=300&fit=crop&crop=face',
       'https://images.unsplash.com/photo-1552374196-c4e7ffc6e126?w=300&h=300&fit=crop&crop=face',
       'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=300&fit=crop&crop=face',
       'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300&h=300&fit=crop&crop=face',
-      'https://images.unsplash.com/photo-1494790108755-2616c2e9ba83?w=300&h=300&fit=crop&crop=face',
       'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=300&h=300&fit=crop&crop=face',
 
       // (Add more if needed, similar pattern)
