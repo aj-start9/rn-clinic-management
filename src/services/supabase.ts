@@ -531,10 +531,15 @@ export const getAppointmentsByRole = async (
             address,
             phone
           ),
+          slot:availabilities(
+            id,
+            start_time,
+            end_time
+          )
         `)
         .eq('doctor_id', finalDoctorId)
         .order('date', { ascending: true });
-      
+        
       if (error) {
         console.error('Error fetching doctor appointments:', error);
         return { data: null, error };
@@ -584,6 +589,11 @@ export const getAppointmentsByRole = async (
           name: appointment.clinic.name,
           address: appointment.clinic.address,
           phone: appointment.clinic.phone
+        } : null,
+        slot: appointment.slot ? {
+          id: appointment.slot.id,
+          start_time: appointment.slot.start_time,
+          end_time: appointment.slot.end_time
         } : null,
         created_at: appointment.created_at,
         updated_at: appointment.updated_at

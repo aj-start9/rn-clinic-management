@@ -133,33 +133,6 @@ class AppointmentService {
   }
 
   /**
-   * Get doctor's appointments
-   */
-  async getDoctorAppointments(doctorId: string) {
-    try {
-      const { data, error } = await supabase
-        .from('appointments')
-        .select(`
-          *,
-          patients:users!patient_id (
-            id,
-            full_name,
-            phone,
-            email
-          )
-        `)
-        .eq('doctor_id', doctorId)
-        .order('appointment_date', { ascending: true });
-
-      if (error) throw error;
-      return data;
-    } catch (error) {
-      console.error('Error fetching doctor appointments:', error);
-      throw error;
-    }
-  }
-
-  /**
    * Update appointment status
    */
   async updateAppointmentStatus(appointmentId: string, status: string) {
