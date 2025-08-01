@@ -406,6 +406,7 @@ const styles = StyleSheet.create({
   overlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    marginBottom: Spacing.lg,
   },
   keyboardAvoid: {
     flex: 1,
