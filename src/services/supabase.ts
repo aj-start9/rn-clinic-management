@@ -425,6 +425,11 @@ export const getUserAppointments = async (userId: string) => {
           name,
           address,
           phone
+        ),
+        slot:availabilities(
+          id,
+          start_time,
+          end_time
         )
       `)
       .eq('user_id', userId)
@@ -447,6 +452,11 @@ export const getUserAppointments = async (userId: string) => {
       date: appointment.date,
       status: appointment.status,
       fee_charged: appointment.fee_charged,
+      slot: appointment.slot ? {
+        id: appointment.slot.id,
+        start_time: appointment.slot.start_time,
+        end_time: appointment.slot.end_time
+      } : null,
       symptoms: appointment.symptoms,
       notes: appointment.notes,
       doctor: appointment.doctor ? {
@@ -520,7 +530,7 @@ export const getAppointmentsByRole = async (
             name,
             address,
             phone
-          )
+          ),
         `)
         .eq('doctor_id', finalDoctorId)
         .order('date', { ascending: true });

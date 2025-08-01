@@ -1,3 +1,4 @@
+import { fetchDoctorDetails } from '@/src/redux/doctorSlice.supabase';
 import { Ionicons } from '@expo/vector-icons';
 import { RouteProp, useRoute } from '@react-navigation/native';
 import React from 'react';
@@ -56,6 +57,7 @@ export const BookAppointmentScreen: React.FC = () => {
         clinic_id: clinic.id,
       });
 
+
       showSuccess(
         'Appointment Confirmed!',
         result.message || 'Your appointment has been booked and confirmation sent!',
@@ -80,7 +82,7 @@ export const BookAppointmentScreen: React.FC = () => {
           appointment_date: date,
           slot_id: slot.id,
         });
-
+        dispatch(fetchDoctorDetails(doctor.id));
         showSuccess(
           'Appointment Booked!',
           'Your appointment has been successfully booked. You will receive a confirmation shortly.',

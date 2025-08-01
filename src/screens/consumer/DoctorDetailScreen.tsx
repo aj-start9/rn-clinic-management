@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { RouteProp, useRoute } from '@react-navigation/native';
+import { RouteProp, useIsFocused, useRoute } from '@react-navigation/native';
 import React, { useEffect, useState } from 'react';
 import {
   FlatList,
@@ -26,6 +26,7 @@ export const DoctorDetailScreen: React.FC = () => {
   const navigation = useNavigation();
   const route = useRoute<DoctorDetailRouteProp>();
   const dispatch = useAppDispatch();
+  const isFocused = useIsFocused();
 
   const { selectedDoctor, loading, error } = useAppSelector((state) => state.doctors);
   const { selectedDate, selectedSlot } = useAppSelector((state) => state.appointments);
@@ -37,11 +38,26 @@ export const DoctorDetailScreen: React.FC = () => {
     if (doctorId) {
       dispatch(fetchDoctorDetails(doctorId));
     }
-  }, [dispatch, doctorId]); useEffect(() => {
+  }, [dispatch, doctorId]);   useEffect(() => {
     if (selectedDoctor?.clinics?.length) {
       setSelectedClinic(selectedDoctor.clinics[0]);
     }
-  }, [selectedDoctor]);
+  }, [selectedDoctor, isFocused]);
+
+  // Auto-select tomorrow's date when clinic is selected
+  useEffect(() => {
+    if (selectedClinic && availableDates?.length > 0) {
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      const tomorrowDateString = tomorrow.toISOString().split('T')[0];
+      
+      // Check if tomorrow is available
+      const tomorrowSlot = availableDates.find(slot => slot.date === tomorrowDateString);
+      if (tomorrowSlot) {
+        dispatch(setSelectedDate(tomorrowDateString));
+      }
+    }
+  }, [selectedClinic, dispatch, isFocused]);
 
   if (loading) {
     return (
@@ -125,7 +141,16 @@ export const DoctorDetailScreen: React.FC = () => {
     return specialties.filter((spec: any) => spec.id === specialtyId)[0]?.name;
   }
 
-  const availableDates = selectedClinic && selectedDoctor.available_slots || [];
+  // Get tomorrow's date
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const tomorrowDateString = tomorrow.toISOString().split('T')[0]; // Format: YYYY-MM-DD
+
+  // Filter available dates to show from tomorrow onwards
+  const availableDates = selectedClinic && selectedDoctor.available_slots 
+    ? selectedDoctor.available_slots.filter(slot => slot.date >= tomorrowDateString)
+    : [];
+  
   const slotsForSelectedDate = selectedDate
     ? availableDates.find(slot => slot.date === selectedDate)?.slots || []
     : [];

@@ -84,16 +84,14 @@ export const AppointmentCard: React.FC<AppointmentCardProps> = ({
           role={avatarRole}
           size={50}
           avatarRole={avatarRoleId}
+          imageUrl={userRole === 'consumer' ? appointment.doctor?.photo_url : appointment.user?.avatar_url}
         />
         <View style={styles.info}>
           <Text style={styles.name}>{displayName}</Text>
-          {userRole === 'consumer' && appointment.doctor && (
-            <Text style={styles.specialty}>{appointment.doctor.specialty || 'General'}</Text>
-          )}
           <View style={styles.dateTimeContainer}>
             <Ionicons name="calendar-outline" size={16} color={Colors.darkGray} />
             <Text style={styles.dateTime}>
-              {formatDate(appointment.date)} • {appointment?.slot?.time}
+              {formatDate(appointment.date)} • {appointment?.slot?.start_time}  
             </Text>
           </View>
         </View>

@@ -8,7 +8,7 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
-import DatePicker from 'react-native-date-picker';
+import DateTimePickerModal from "react-native-modal-datetime-picker";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { Button } from '../../components/Button';
@@ -431,11 +431,11 @@ export const EnhancedAvailabilityScreen: React.FC = () => {
       </ScrollView>
 
       {/* Date Picker Modal */}
-      <DatePicker
-        modal
-        open={showDatePicker}
-        date={selectedDate}
+      {showDatePicker && (
+        <DateTimePickerModal
+        isVisible={showDatePicker}
         mode="date"
+        date={selectedDate}
         minimumDate={new Date()}
         onConfirm={(date) => {
           setShowDatePicker(false);
@@ -443,6 +443,7 @@ export const EnhancedAvailabilityScreen: React.FC = () => {
         }}
         onCancel={() => setShowDatePicker(false)}
       />
+      )}
 
       <CustomModal
         isVisible={modalState.isVisible}
