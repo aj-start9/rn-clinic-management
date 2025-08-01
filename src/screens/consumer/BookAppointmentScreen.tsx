@@ -94,7 +94,7 @@ export const BookAppointmentScreen: React.FC = () => {
 
       } catch (fallbackError: any) {
         console.error('All booking methods failed:', fallbackError);
-        showError('Error', fallbackError.message || 'Failed to book appointment. Please try again.');
+        showError('Error', 'Failed to book appointment. Please try again.');
       }
     }
   };
